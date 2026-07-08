@@ -79,7 +79,9 @@ function ScanResultCard({ result, onReset }: { result: ScanResult; onReset: () =
                 <InfoCell icon={Building2} label="Organization" value={result.registration.organization} />
               )}
               {result.event?.name && (
-                <InfoCell icon={CalendarDays} label="Event" value={result.event.name} />
+                <div className="col-span-2">
+                  <InfoCell icon={CalendarDays} label="Event" value={result.event.name} />
+                </div>
               )}
               {isDuplicate && result.registration.attendanceTime && (
                 <div className="col-span-2">
@@ -120,7 +122,7 @@ function InfoCell({ icon: Icon, label, value }: { icon: React.ElementType; label
       <p className="text-xs text-slate-400 flex items-center gap-1 mb-0.5">
         <Icon className="w-3 h-3" /> {label}
       </p>
-      <p className="text-sm font-semibold text-slate-700 break-all">{value}</p>
+      <p className="text-sm font-semibold text-slate-700 wrap-break-word">{value}</p>
     </div>
   );
 }
