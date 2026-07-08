@@ -51,21 +51,28 @@ export function RegistrationSuccessPage() {
             <p className="text-xs font-semibold text-blue-500 uppercase tracking-widest mb-2">
               Your Unique Reference Number
             </p>
-            <div className="flex items-center justify-center gap-3 mb-3">
-              <span className="text-3xl font-bold text-blue-700 tracking-widest font-mono">
-                {registration.registrationNumber}
-              </span>
-              <button
-                onClick={handleCopy}
-                title="Copy reference number"
-                className="p-2 rounded-lg bg-blue-100 hover:bg-blue-200 text-blue-600 transition-colors"
-              >
-                {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
-              </button>
-            </div>
-            <div className="flex items-center justify-center gap-1.5 text-xs text-blue-600 bg-blue-100 rounded-lg px-3 py-2">
+            <p className="text-3xl font-bold text-blue-700 tracking-widest font-mono mb-4">
+              {registration.registrationNumber}
+            </p>
+
+            {/* Big copy CTA */}
+            <button
+              onClick={handleCopy}
+              className={`w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-semibold text-sm transition-all ${
+                copied
+                  ? 'bg-emerald-500 text-white'
+                  : 'bg-blue-600 hover:bg-blue-700 text-white'
+              }`}
+            >
+              {copied
+                ? <><Check className="w-4 h-4" /> Copied to clipboard!</>
+                : <><Copy className="w-4 h-4" /> Copy Reference Number</>
+              }
+            </button>
+
+            <div className="flex items-center justify-center gap-1.5 text-xs text-blue-600 mt-3">
               <BookmarkCheck className="w-3.5 h-3.5 shrink-0" />
-              Save this number — use it to check your status from the home page
+              Save this number — you'll need it to track your status
             </div>
           </div>
         ) : null}
