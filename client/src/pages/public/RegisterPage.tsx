@@ -23,6 +23,7 @@ import {
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import type { Question } from '@/types';
+import { StatusCheckWidget } from '@/components/public/StatusCheckWidget';
 
 // ── Receipt upload zone ───────────────────────────────────────────────────────
 interface ReceiptUploadProps {
@@ -219,6 +220,12 @@ export function RegisterPage() {
   const brand = tenant?.primaryColor ?? '#3b82f6';
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
+  const trackRef = useRef<HTMLDivElement>(null);
+
+  const scrollToTracker = () => {
+    trackRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setTimeout(() => trackRef.current?.querySelector('input')?.focus(), 400);
+  };
 
   const { data: event, isLoading: eventLoading, isError } = useQuery({
     queryKey: ['public-event', orgSlug, slug],
@@ -582,11 +589,16 @@ export function RegisterPage() {
         </div>
       </form>
 
+      {/* Track your Registration inline section */}
+      <div ref={trackRef} className="mt-10">
+        <StatusCheckWidget />
+      </div>
+
       {/* Fixed FAB stack — bottom-right */}
       <div className="fixed bottom-6 right-4 z-50 flex flex-col items-end gap-3">
         {/* Track Registration */}
         <button
-          onClick={() => navigate(`/${orgSlug}/registration/status/`)}
+          onClick={scrollToTracker}
           className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white px-3 py-3 sm:px-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 font-semibold text-sm"
           aria-label="Track your Registration"
         >
