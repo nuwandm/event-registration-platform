@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, Controller, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -59,7 +59,7 @@ export function EventFormDialog({ open, onClose, event }: EventFormDialogProps) 
     control,
     formState: { errors },
   } = useForm<EventFormValues>({
-    resolver: zodResolver(eventFormSchema),
+    resolver: zodResolver(eventFormSchema) as unknown as Resolver<EventFormValues>,
     defaultValues: {
       status: 'draft',
       registrationFee: 0,
@@ -306,7 +306,7 @@ export function EventFormDialog({ open, onClose, event }: EventFormDialogProps) 
           <Button variant="outline" className="flex-1" onClick={onClose} disabled={isPending}>
             Cancel
           </Button>
-          <Button className="flex-1" onClick={handleSubmit((d) => mutate(d as EventFormValues))} disabled={isPending}>
+          <Button className="flex-1" onClick={handleSubmit((d) => mutate(d))} disabled={isPending}>
             {isPending ? (
               <span className="flex items-center gap-2">
                 <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />

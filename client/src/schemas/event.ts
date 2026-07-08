@@ -15,12 +15,28 @@ export const eventFormSchema = z.object({
   registrationOpenDate: z.string().min(1, 'Registration open date is required'),
   registrationCloseDate: z.string().min(1, 'Registration close date is required'),
   registrationFee: z.coerce.number().min(0, 'Fee cannot be negative'),
-  maxParticipants: z.preprocess(
-    (v) => (v === '' || v === null || v === undefined ? undefined : Number(v)),
-    z.number().min(1).optional()
-  ),
+  maxParticipants: z.union([
+    z.number().min(1),
+    z.string().transform((v) => (v === '' ? undefined : Number(v))).pipe(z.number().min(1).optional()),
+  ]).optional(),
   status: z.enum(['draft', 'published', 'closed']),
   bankDetails: bankDetailsSchema,
 });
 
-export type EventFormValues = z.infer<typeof eventFormSchema>;
+export interface EventFormValues {
+  name: string;
+  description: string;
+  venue: string;
+  eventDate: string;
+  registrationOpenDate: string;
+  registrationCloseDate: string;
+  registrationFee: number;
+  maxParticipants?: number;
+  status: 'draft' | 'published' | 'closed';
+  bankDetails: {
+    bankName: string;
+    accountName: string;
+    accountNumber: string;
+    branch: string;
+  };
+}
