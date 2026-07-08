@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import {
   Plus, Pencil, Trash2, CalendarDays, Search, ChevronLeft, ChevronRight,
-  UserCog, X,
+  UserCog, X, Link2, Copy, Check, ExternalLink,
 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -24,6 +24,74 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
+
+// ── Share Dialog ──────────────────────────────────────────────────────────────
+function ShareDialog({ event, onClose }: { event: Event; onClose: () => void }) {
+  const [copied, setCopied] = useState(false);
+  const registrationUrl = `${window.location.origin}/events/${event.slug}`;
+
+  const copy = async () => {
+    await navigator.clipboard.writeText(registrationUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
+              <Link2 className="w-4 h-4 text-blue-600" />
+            </div>
+            <div>
+              <h2 className="text-base font-semibold text-slate-800">Share Registration Link</h2>
+              <p className="text-xs text-slate-400 truncate max-w-xs">{event.name}</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="p-6 space-y-4">
+          <p className="text-sm text-slate-500">
+            Share this link with participants so they can view the event details and register.
+          </p>
+
+          {/* URL box */}
+          <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3">
+            <p className="flex-1 text-sm text-slate-700 truncate font-mono">{registrationUrl}</p>
+            <button
+              onClick={copy}
+              className="shrink-0 flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 transition-colors"
+            >
+              {copied
+                ? <><Check className="w-3.5 h-3.5 text-emerald-500" /><span className="text-emerald-600">Copied!</span></>
+                : <><Copy className="w-3.5 h-3.5 text-slate-500" /><span className="text-slate-600">Copy</span></>
+              }
+            </button>
+          </div>
+
+          {/* Open in browser */}
+          <a
+            href={registrationUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+          >
+            <ExternalLink className="w-4 h-4" />
+            Open in browser
+          </a>
+
+          <Button className="w-full" onClick={copy}>
+            {copied ? <><Check className="w-4 h-4 mr-2" />Link Copied!</> : <><Copy className="w-4 h-4 mr-2" />Copy Link</>}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // ── Manage Staff Dialog ───────────────────────────────────────────────────────
 function ManageStaffDialog({ event, onClose }: { event: Event; onClose: () => void }) {
@@ -143,6 +211,7 @@ export function EventsPage() {
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   const [deletingEvent, setDeletingEvent] = useState<Event | null>(null);
   const [staffEvent, setStaffEvent] = useState<Event | null>(null);
+  const [shareEvent, setShareEvent] = useState<Event | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin-events', page, search, statusFilter],
@@ -277,6 +346,10 @@ export function EventsPage() {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1 justify-end">
+                        <Button variant="ghost" size="icon" onClick={() => setShareEvent(event)} title="Share registration link"
+                          className="text-blue-400 hover:text-blue-600 hover:bg-blue-50">
+                          <Link2 className="w-3.5 h-3.5" />
+                        </Button>
                         <Button variant="ghost" size="icon" onClick={() => setStaffEvent(event)} title="Manage Staff">
                           <UserCog className="w-3.5 h-3.5" />
                         </Button>
@@ -316,6 +389,9 @@ export function EventsPage() {
 
       {/* Create / Edit Dialog */}
       <EventFormDialog open={formOpen} onClose={closeForm} event={editingEvent} />
+
+      {/* Share Dialog */}
+      {shareEvent && <ShareDialog event={shareEvent} onClose={() => setShareEvent(null)} />}
 
       {/* Manage Staff Dialog */}
       {staffEvent && <ManageStaffDialog event={staffEvent} onClose={() => setStaffEvent(null)} />}

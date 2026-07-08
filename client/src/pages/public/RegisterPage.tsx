@@ -197,37 +197,45 @@ export function RegisterPage() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-10">
-      <Link to={`/events/${slug}`} className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-blue-600 mb-6 transition-colors">
+    <div className="max-w-2xl mx-auto px-4 py-8">
+      <Link to={`/events/${slug}`} className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-blue-600 mb-5 transition-colors">
         <ArrowLeft className="w-4 h-4" />
         Back to event
       </Link>
 
-      {/* Event summary card */}
-      <div className="bg-linear-to-r from-blue-600 to-indigo-700 rounded-2xl p-5 mb-8 text-white">
-        <div className="flex items-start gap-4">
-          {event.bannerImage && (
-            <img src={event.bannerImage} alt={event.name} className="w-20 h-16 rounded-lg object-cover shrink-0 hidden sm:block" />
-          )}
-          <div className="flex-1 min-w-0">
-            <p className="text-blue-200 text-xs font-medium mb-1 uppercase tracking-wide">Registering for</p>
-            <h2 className="text-xl font-bold leading-snug mb-2 truncate">{event.name}</h2>
-            <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-blue-100">
-              <span className="flex items-center gap-1.5">
-                <CalendarDays className="w-3.5 h-3.5" />
-                {format(new Date(event.eventDate), 'MMM d, yyyy')}
-              </span>
-              <span className="flex items-center gap-1.5">
-                <MapPin className="w-3.5 h-3.5" />
-                {event.venue}
-              </span>
-              <span className="flex items-center gap-1.5">
-                <CreditCard className="w-3.5 h-3.5" />
-                {event.registrationFee === 0 ? 'Free' : `LKR ${event.registrationFee.toLocaleString()}`}
-              </span>
+      {/* Google Forms style hero card */}
+      <div className="rounded-2xl overflow-hidden border border-slate-200 shadow-sm mb-6">
+        {/* Full-width banner */}
+        <div className="relative w-full h-44 sm:h-56 bg-linear-to-br from-blue-500 to-indigo-700">
+          {event.bannerImage ? (
+            <img src={event.bannerImage} alt={event.name} className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <CalendarDays className="w-16 h-16 text-white/20" />
             </div>
+          )}
+          {/* Gradient overlay for readability */}
+          <div className="absolute inset-0 bg-linear-to-t from-black/40 via-transparent to-transparent" />
+        </div>
+
+        {/* Event info below banner — blue left border like Google Forms */}
+        <div className="bg-white border-t-4 border-blue-600 px-6 py-5">
+          <p className="text-xs font-semibold text-blue-500 uppercase tracking-widest mb-1">Registration Form</p>
+          <h2 className="text-2xl font-bold text-slate-800 leading-tight mb-3">{event.name}</h2>
+          <div className="flex flex-wrap gap-x-5 gap-y-1.5 text-sm text-slate-500">
+            <span className="flex items-center gap-1.5">
+              <CalendarDays className="w-4 h-4 text-blue-400" />
+              {format(new Date(event.eventDate), 'EEEE, MMM d, yyyy')} · {format(new Date(event.eventDate), 'h:mm a')}
+            </span>
+            <span className="flex items-center gap-1.5">
+              <MapPin className="w-4 h-4 text-blue-400" />
+              {event.venue}
+            </span>
+            <span className="flex items-center gap-1.5">
+              <CreditCard className="w-4 h-4 text-blue-400" />
+              {event.registrationFee === 0 ? 'Free Entry' : `LKR ${event.registrationFee.toLocaleString()}`}
+            </span>
           </div>
-          <Badge className="bg-white/20 text-white border-0 shrink-0">Open</Badge>
         </div>
       </div>
 
