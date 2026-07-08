@@ -72,6 +72,14 @@ export function AdminEventDetailPage() {
     enabled: !!id,
   });
 
+  // Live participant count — always reflects the actual table total
+  const { data: participantCount = 0 } = useQuery({
+    queryKey: ['event-participant-count', id],
+    queryFn: () => api.registrations.getAll({ eventId: id!, limit: 1 }),
+    select: (res) => res.data.data?.total ?? 0,
+    enabled: !!id,
+  });
+
   const admissionMutation = useMutation({
     mutationFn: () => api.events.toggleAdmission(id!),
     onSuccess: (res) => {
@@ -154,8 +162,8 @@ export function AdminEventDetailPage() {
               </div>
             </div>
             <div className="text-white/80 text-sm text-right">
-              <p className="font-bold text-white text-lg">{event.registrationCount}</p>
-              <p className="text-xs">registered</p>
+              <p className="font-bold text-white text-lg">{participantCount}</p>
+              <p className="text-xs">participants</p>
             </div>
           </div>
         </div>
@@ -173,8 +181,8 @@ export function AdminEventDetailPage() {
               </div>
             </div>
             <div className="text-right shrink-0">
-              <p className="text-2xl font-bold text-slate-800">{event.registrationCount}</p>
-              <p className="text-xs text-slate-400">registrations</p>
+              <p className="text-2xl font-bold text-slate-800">{participantCount}</p>
+              <p className="text-xs text-slate-400">participants</p>
             </div>
           </div>
         </div>
@@ -188,7 +196,7 @@ export function AdminEventDetailPage() {
           >
             {t}
             {t === 'Participants' && (
-              <span className="ml-1.5 text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full">{event.registrationCount}</span>
+              <span className="ml-1.5 text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full">{participantCount}</span>
             )}
           </button>
         ))}
@@ -347,6 +355,7 @@ function ParticipantsTab({ eventId }: { eventId: string }) {
   const invalidate = () => {
     qc.invalidateQueries({ queryKey: ['event-registrations', eventId] });
     qc.invalidateQueries({ queryKey: ['admin-event-detail'] });
+    qc.invalidateQueries({ queryKey: ['event-participant-count', eventId] });
   };
 
   const deleteMutation = useMutation({
