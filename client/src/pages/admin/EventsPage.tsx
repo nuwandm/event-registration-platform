@@ -376,7 +376,7 @@ export function EventsPage() {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
         {isLoading ? (
           <div className="p-4 space-y-3">
             {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
@@ -389,7 +389,7 @@ export function EventsPage() {
             action={!search && !statusFilter ? <Button onClick={openCreate} size="sm"><Plus className="w-4 h-4 mr-1" />Create Event</Button> : undefined}
           />
         ) : (
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto rounded-xl">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-slate-100 bg-slate-50">
