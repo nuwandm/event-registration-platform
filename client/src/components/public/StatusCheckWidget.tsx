@@ -111,7 +111,7 @@ export function StatusCheckWidget() {
                 type="text"
                 value={refNumber}
                 onChange={(e) => setRefNumber(e.target.value)}
-                placeholder="e.g. EVT-2026-000001"
+                placeholder="e.g. EVT-2026-000001-A3K9XZ"
                 className="w-full pl-9 pr-4 py-3 text-sm border border-slate-300 bg-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent uppercase placeholder:normal-case placeholder:text-slate-400 shadow-sm"
               />
             </div>
