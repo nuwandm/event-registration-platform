@@ -36,8 +36,8 @@ function ShareDialog({ event, orgSlug, onClose }: { event: Event; orgSlug: strin
   const apiBase = (import.meta.env.VITE_API_URL as string ?? '/api').replace(/\/api$/, '');
   const socialUrl = `${apiBase}/api/og/${orgSlug}/events/${event.slug}`;
 
-  // Direct link — goes straight to the Vercel SPA
-  const directUrl = `${window.location.origin}/${orgSlug}/events/${event.slug}`;
+  // Direct link — goes straight to the registration page
+  const directUrl = `${window.location.origin}/${orgSlug}/events/${event.slug}/register`;
 
   const copy = async (url: string, setStat: (v: boolean) => void) => {
     await navigator.clipboard.writeText(url);

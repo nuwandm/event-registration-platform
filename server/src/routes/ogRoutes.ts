@@ -1,19 +1,21 @@
 import { Router, Request, Response } from 'express';
 import { Event } from '../models/Event';
+import { Tenant } from '../models/Tenant';
 import { env } from '../config/env';
 import { format } from 'date-fns';
 
 const router = Router();
 
-// GET /og/events/:slug
-// Social media crawlers (WhatsApp, Facebook, Twitter) hit this URL.
+// GET /og/:orgSlug/events/:slug
+// Social media crawlers (WhatsApp, Facebook, Telegram) hit this URL.
 // Real users are redirected instantly to the Vercel SPA.
-router.get('/events/:slug', async (req: Request, res: Response): Promise<void> => {
-  const { slug } = req.params;
+router.get('/:orgSlug/events/:slug', async (req: Request, res: Response): Promise<void> => {
+  const { orgSlug, slug } = req.params;
   const clientUrl = env.CLIENT_URL;
-  const targetUrl = `${clientUrl}/events/${slug}`;
+  const targetUrl = `${clientUrl}/${orgSlug}/events/${slug}/register`;
 
   try {
+    const tenant = await Tenant.findOne({ slug: orgSlug, status: 'active' }).lean();
     const event = await Event.findOne({ slug, status: 'published' }).lean();
 
     if (!event) {
@@ -21,13 +23,25 @@ router.get('/events/:slug', async (req: Request, res: Response): Promise<void> =
       return;
     }
 
-    const title = event.name;
-    const description = event.description?.slice(0, 200) ?? 'Register for this event on EventHub';
-    const image = event.bannerImage ?? `${clientUrl}/Event Hub.png`;
-    const dateStr = format(new Date(event.eventDate), 'EEEE, MMMM d, yyyy · h:mm a');
-    const fullDesc = `📅 ${dateStr}  📍 ${event.venue}  ${description}`;
+    const orgName = tenant?.name ?? 'EventHub';
+    const logoUrl = tenant?.logoUrl ?? `${clientUrl}/Event Hub.png`;
 
-    // Detect social media crawlers by User-Agent
+    const title = `${event.name} — ${orgName}`;
+    const dateStr = format(new Date(event.eventDate), 'EEEE, MMMM d, yyyy · h:mm a');
+    const fee = (event.registrationFee as number) === 0
+      ? 'Free Entry'
+      : `LKR ${(event.registrationFee as number).toLocaleString()}`;
+
+    const description = [
+      `📅 ${dateStr}`,
+      `📍 ${event.venue}`,
+      `🎟️ ${fee}`,
+      event.description?.slice(0, 150) ?? '',
+    ].filter(Boolean).join('  ·  ');
+
+    const image = (event.bannerImage as string | undefined) ?? logoUrl;
+
+    // Detect social media crawlers
     const ua = req.headers['user-agent'] ?? '';
     const isCrawler = /facebookexternalhit|Twitterbot|WhatsApp|LinkedInBot|TelegramBot|Slackbot|Discordbot|vkShare|Pinterest|Googlebot/i.test(ua);
 
@@ -36,7 +50,6 @@ router.get('/events/:slug', async (req: Request, res: Response): Promise<void> =
       return;
     }
 
-    // Serve OG HTML to crawlers
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.send(`<!DOCTYPE html>
 <html lang="en">
@@ -45,23 +58,21 @@ router.get('/events/:slug', async (req: Request, res: Response): Promise<void> =
   <meta http-equiv="refresh" content="0; url=${targetUrl}" />
   <title>${title}</title>
 
-  <!-- Open Graph -->
+  <!-- Open Graph (used by WhatsApp, Facebook, Telegram, LinkedIn) -->
   <meta property="og:type" content="website" />
   <meta property="og:url" content="${targetUrl}" />
   <meta property="og:title" content="${title}" />
-  <meta property="og:description" content="${fullDesc}" />
+  <meta property="og:description" content="${description}" />
   <meta property="og:image" content="${image}" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
-  <meta property="og:site_name" content="EventHub" />
+  <meta property="og:site_name" content="${orgName}" />
 
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="${title}" />
-  <meta name="twitter:description" content="${fullDesc}" />
+  <meta name="twitter:description" content="${description}" />
   <meta name="twitter:image" content="${image}" />
-
-  <!-- WhatsApp uses og: tags — no extra tags needed -->
 </head>
 <body>
   <p>Redirecting to <a href="${targetUrl}">${title}</a>…</p>
