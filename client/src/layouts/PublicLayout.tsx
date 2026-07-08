@@ -21,9 +21,7 @@ export function PublicLayout() {
         <Outlet />
       </main>
 
-      <footer className="bg-white border-t border-slate-200 py-6 text-center text-sm text-slate-500">
-        © {new Date().getFullYear()} EventHub. All rights reserved.
-        <span className="mx-2">·</span>
+      <footer className="bg-white border-t border-slate-200 py-3 text-center text-sm text-slate-500">
         Developed by{' '}
         <button
           onClick={() => setShowContact((v) => !v)}
