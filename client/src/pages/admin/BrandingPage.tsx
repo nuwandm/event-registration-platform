@@ -24,19 +24,12 @@ export function BrandingPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isOrgAdmin = admin?.role === 'org_admin';
-  const tenantId = (admin as { id?: string })?.id ?? '';
 
   const { mutate, isPending, error, isSuccess } = useMutation({
     mutationFn: () =>
-      tenantApi.superAdmin.updateBranding(
-        // org_admin calls via their own tenant — we pass a placeholder; the backend
-        // will use the token's tenantId. For now super_admin picks explicit id.
-        tenantId,
-        { name: name || undefined, primaryColor, logo: logoFile ?? undefined }
-      ),
+      tenantApi.updateOwnBranding({ name: name || undefined, primaryColor, logo: logoFile ?? undefined }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['tenant-public'] });
-      document.documentElement.style.setProperty('--brand-color', primaryColor);
       toast.success('Branding updated');
     },
   });

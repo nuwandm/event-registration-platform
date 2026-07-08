@@ -35,6 +35,17 @@ export const tenantApi = {
   getPublicInfo: (orgSlug: string) =>
     api.get<ApiResponse<{ tenant: PublicTenantInfo }>>(`/${orgSlug}/public`),
 
+  // Org admin — update own tenant branding
+  updateOwnBranding: (payload: { name?: string; primaryColor?: string; logo?: File }) => {
+    const form = new FormData();
+    if (payload.name) form.append('name', payload.name);
+    if (payload.primaryColor) form.append('primaryColor', payload.primaryColor);
+    if (payload.logo) form.append('banner', payload.logo);
+    return api.patch<ApiResponse<{ tenant: Tenant }>>('/me/branding', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+
   // Super admin
   superAdmin: {
     getAll: (params?: { page?: number; limit?: number; status?: string; search?: string }) =>

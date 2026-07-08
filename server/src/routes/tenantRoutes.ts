@@ -20,7 +20,7 @@ router.post('/superadmin/tenants/:id/suspend', authGuard, superAdminGuard, tenan
 router.get('/superadmin/stats', authGuard, superAdminGuard, tenantController.getPlatformStats);
 router.patch('/superadmin/tenants/:id/branding', authGuard, superAdminGuard, uploadBanner, tenantController.updateBranding);
 
-// ── Org admin — update own branding ──────────────────────────────────────────
-router.patch('/tenants/:id/branding', authGuard, uploadBanner, tenantController.updateBranding);
+// ── Org admin — update own tenant branding ───────────────────────────────────
+router.patch('/me/branding', authGuard, uploadBanner, tenantController.updateOwnBranding);
 
 export default router;

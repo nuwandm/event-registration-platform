@@ -208,12 +208,30 @@ export const tenantController = {
     }
   },
 
-  // PATCH /api/superadmin/tenants/:id/branding — Super admin or org_admin
+  // PATCH /api/superadmin/tenants/:id/branding — Super admin only
   async updateBranding(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       if (!req.admin) throw new AppError('Unauthorized', 401);
       const { name, primaryColor } = req.body as { name?: string; primaryColor?: string };
       const tenant = await tenantService.updateBranding(req.params.id, { name, primaryColor }, req.file);
+      res.json({ success: true, message: 'Branding updated', data: { tenant } });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  // PATCH /api/me/branding — Org admin updates their own tenant branding
+  async updateOwnBranding(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      if (!req.admin) throw new AppError('Unauthorized', 401);
+      if (req.admin.role === 'super_admin') throw new AppError('Forbidden', 403);
+      if (!req.admin.tenantId) throw new AppError('No tenant linked to this account', 403);
+      const { name, primaryColor } = req.body as { name?: string; primaryColor?: string };
+      const tenant = await tenantService.updateBranding(
+        String(req.admin.tenantId),
+        { name, primaryColor },
+        req.file
+      );
       res.json({ success: true, message: 'Branding updated', data: { tenant } });
     } catch (error) {
       next(error);
