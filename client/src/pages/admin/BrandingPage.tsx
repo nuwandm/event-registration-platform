@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Upload, Palette, Save } from 'lucide-react';
 
@@ -10,10 +10,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 
 export function BrandingPage() {
-  const { tenant } = useTenant();
+  const { tenant, isLoading: tenantLoading } = useTenant();
   const admin = useAuthStore((s) => s.admin);
   const qc = useQueryClient();
 
@@ -24,6 +25,15 @@ export function BrandingPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isOrgAdmin = admin?.role === 'org_admin';
+
+  // Sync fields once tenant data arrives (it may not be ready on first render)
+  useEffect(() => {
+    if (tenant) {
+      setName(tenant.name ?? '');
+      setPrimaryColor(tenant.primaryColor ?? '#3b82f6');
+      setLogoPreview(tenant.logoUrl ?? null);
+    }
+  }, [tenant]);
 
   const { mutate, isPending, error, isSuccess } = useMutation({
     mutationFn: () =>
@@ -59,11 +69,38 @@ export function BrandingPage() {
     );
   }
 
+  if (tenantLoading) {
+    return (
+      <div className="animate-fade-in space-y-6">
+        <PageHeader title="Branding" description="Customize your organization's appearance" />
+        <div className="max-w-xl bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-5">
+          <Skeleton className="h-5 w-40" />
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-5 w-32" />
+          <Skeleton className="h-10 w-56" />
+          <Skeleton className="h-5 w-16" />
+          <Skeleton className="h-32 w-full rounded-xl" />
+          <Skeleton className="h-10 w-32" />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="animate-fade-in space-y-6">
       <PageHeader title="Branding" description="Customize your organization's appearance" />
 
-      <div className="max-w-xl bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-5">
+      <div className="relative max-w-xl bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-5">
+        {/* Save overlay spinner */}
+        {isPending && (
+          <div className="absolute inset-0 bg-white/70 rounded-2xl flex items-center justify-center z-10">
+            <div className="flex flex-col items-center gap-2">
+              <div className="w-8 h-8 border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin" />
+              <p className="text-sm text-slate-500 font-medium">Saving...</p>
+            </div>
+          </div>
+        )}
+
         {errorMessage && (
           <Alert variant="destructive">
             <AlertDescription>{errorMessage}</AlertDescription>
