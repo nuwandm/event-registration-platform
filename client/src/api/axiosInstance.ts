@@ -24,9 +24,8 @@ api.interceptors.response.use(
     const isLoginEndpoint = url.includes('/login');
     // Only redirect on 401 for authenticated requests (not login attempts)
     if (error.response?.status === 401 && !isLoginEndpoint) {
-      const { orgSlug } = useAuthStore.getState();
       useAuthStore.getState().logout();
-      window.location.href = orgSlug ? `/${orgSlug}/admin/login` : '/login';
+      window.location.href = '/login';
     }
     return Promise.reject(error);
   }
