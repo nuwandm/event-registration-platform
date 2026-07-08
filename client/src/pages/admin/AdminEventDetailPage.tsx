@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import {
   ArrowLeft, CalendarDays, MapPin, CreditCard, Users, Building2,
   Pencil, Trash2, Link2, UserCog, DoorOpen, DoorClosed,
-  CheckCircle2, Clock, XCircle, Eye, Search, ChevronLeft, ChevronRight,
+  CheckCircle2, Clock, Eye, Search, ChevronLeft, ChevronRight,
 } from 'lucide-react';
 import { format } from 'date-fns';
 
