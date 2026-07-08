@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
   CheckCircle2, Clock, XCircle, CalendarDays, MapPin, Hash,
   Download, ArrowLeft, User, Mail, Phone, Building2, CreditCard, QrCode,
@@ -36,7 +36,7 @@ const STATUS_CONFIG = {
 };
 
 export function RegistrationStatusPage() {
-  const { api, orgSlug } = useTenant();
+  const { api } = useTenant();
   const { refNumber } = useParams<{ refNumber: string }>();
   const navigate = useNavigate();
 

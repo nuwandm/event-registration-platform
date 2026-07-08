@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useParams, Link } from 'react-router-dom';
-import { CalendarDays, MapPin, Users, CreditCard, Building2, ArrowLeft, ArrowRight } from 'lucide-react';
+import { CalendarDays, MapPin, Users, CreditCard, Building2, ArrowRight } from 'lucide-react';
 import { format } from 'date-fns';
 
 import { useTenant } from '@/context/TenantContext';

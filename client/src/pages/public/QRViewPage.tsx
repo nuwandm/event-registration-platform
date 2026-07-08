@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useParams, Link } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { Download, CheckCircle2, Clock, XCircle, CalendarDays, MapPin, Hash } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -36,7 +36,7 @@ const STATUS_CONFIG = {
 };
 
 export function QRViewPage() {
-  const { api, orgSlug } = useTenant();
+  const { api } = useTenant();
   const { id } = useParams<{ id: string }>();
 
   const { data: registration, isLoading, isError } = useQuery({

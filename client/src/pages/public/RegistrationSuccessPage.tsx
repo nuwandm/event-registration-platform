@@ -1,14 +1,13 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Link, useSearchParams } from 'react-router-dom';
-import { CheckCircle2, Clock, CalendarDays, Copy, Check, BookmarkCheck } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
+import { CheckCircle2, Clock, Copy, Check, BookmarkCheck } from 'lucide-react';
 
 import { useTenant } from '@/context/TenantContext';
-import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export function RegistrationSuccessPage() {
-  const { api, orgSlug } = useTenant();
+  const { api } = useTenant();
   const [params] = useSearchParams();
   const id = params.get('id');
   const [copied, setCopied] = useState(false);
