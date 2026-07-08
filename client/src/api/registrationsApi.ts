@@ -49,6 +49,9 @@ export const registrationsApi = {
   getStatus: (id: string) =>
     api.get<ApiResponse<{ registration: Registration }>>(`/registrations/status/${id}`),
 
+  checkByNumber: (registrationNumber: string) =>
+    api.get<ApiResponse<{ registration: Registration }>>(`/registrations/check/${registrationNumber}`),
+
   // Admin
   getAll: (filters: RegistrationFilters = {}) =>
     api.get<ApiResponse<PaginatedResponse<Registration>>>('/admin/registrations', { params: filters }),

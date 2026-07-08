@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/shared/EmptyState';
+import { StatusCheckWidget } from '@/components/public/StatusCheckWidget';
 
 function EventCard({ event }: { event: Event }) {
   const isRegistrationOpen =
@@ -18,7 +19,7 @@ function EventCard({ event }: { event: Event }) {
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow group">
       {/* Banner */}
-      <div className="relative h-44 bg-gradient-to-br from-blue-500 to-indigo-600 overflow-hidden">
+      <div className="relative h-44 bg-linear-to-br from-blue-500 to-indigo-600 overflow-hidden">
         {event.bannerImage ? (
           <img
             src={event.bannerImage}
@@ -130,6 +131,11 @@ export function HomePage() {
         <p className="text-slate-500 text-lg max-w-xl mx-auto">
           Browse upcoming events, register online, and receive your QR code for seamless entry.
         </p>
+      </div>
+
+      {/* Status check widget */}
+      <div className="mb-12">
+        <StatusCheckWidget />
       </div>
 
       {/* Grid */}

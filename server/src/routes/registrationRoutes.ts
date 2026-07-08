@@ -19,6 +19,7 @@ router.post(
 );
 
 router.get('/registrations/status/:id', registrationController.getRegistrationStatus);
+router.get('/registrations/check/:registrationNumber', registrationController.checkByRegistrationNumber);
 
 // ── Admin ─────────────────────────────────────────────────────────────────────
 router.get('/admin/registrations', authGuard, registrationController.getAllRegistrations);

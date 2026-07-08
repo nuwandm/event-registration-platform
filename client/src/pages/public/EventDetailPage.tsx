@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
+import { StatusCheckWidget } from '@/components/public/StatusCheckWidget';
 
 export function EventDetailPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -121,6 +122,11 @@ export function EventDetailPage() {
           </Link>
         </Button>
       )}
+
+      {/* Status check — participants use the same shared link to track their registration */}
+      <div className="mt-10">
+        <StatusCheckWidget />
+      </div>
     </div>
   );
 }

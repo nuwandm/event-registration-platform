@@ -79,6 +79,12 @@ export const registrationRepository = {
     return Registration.findOne({ qrToken }).populate('eventId', 'name venue eventDate');
   },
 
+  async findByRegistrationNumber(registrationNumber: string): Promise<LeanRegistration | null> {
+    return Registration.findOne({ registrationNumber: registrationNumber.toUpperCase() })
+      .populate('eventId', 'name slug venue eventDate')
+      .lean() as unknown as LeanRegistration | null;
+  },
+
   async countByEvent(eventId: string): Promise<Record<string, number>> {
     const results = await Registration.aggregate([
       { $match: { eventId: new (require('mongoose').Types.ObjectId)(eventId) } },

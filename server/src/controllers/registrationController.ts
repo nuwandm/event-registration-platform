@@ -68,6 +68,16 @@ export const registrationController = {
     }
   },
 
+  // GET /api/registrations/check/:registrationNumber — Public
+  async checkByRegistrationNumber(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const registration = await registrationService.getStatusByRegistrationNumber(req.params.registrationNumber);
+      res.json({ success: true, message: 'Registration retrieved', data: { registration } });
+    } catch (error) {
+      next(error);
+    }
+  },
+
   // GET /api/admin/registrations — Admin
   async getAllRegistrations(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {

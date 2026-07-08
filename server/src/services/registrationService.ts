@@ -96,6 +96,12 @@ export const registrationService = {
     return reg;
   },
 
+  async getStatusByRegistrationNumber(registrationNumber: string): Promise<LeanOrDoc> {
+    const reg = await registrationRepository.findByRegistrationNumber(registrationNumber);
+    if (!reg) throw new AppError('No registration found with this reference number', 404);
+    return reg;
+  },
+
   async getAllRegistrations(query: RegistrationQuery): Promise<PaginatedResult<LeanOrDoc>> {
     return registrationRepository.findAllPaginated(query);
   },

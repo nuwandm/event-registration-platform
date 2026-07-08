@@ -45,9 +45,8 @@ export function AdminLayout() {
   const SidebarContent = () => (
     <nav className="flex flex-col h-full">
       <div className="px-6 py-5 border-b border-slate-700">
-        <Link to="/" className="flex items-center gap-2 font-bold text-xl text-white">
-          <CalendarDays className="w-6 h-6 text-blue-400" />
-          EventHub
+        <Link to="/" className="flex items-center">
+          <img src="/Event Hub.png" alt="EventHub" className="h-9 w-auto object-contain brightness-0 invert" />
         </Link>
         <p className="text-xs text-slate-400 mt-1">
           {admin?.role === 'staff' ? 'Staff Panel' : 'Admin Panel'}

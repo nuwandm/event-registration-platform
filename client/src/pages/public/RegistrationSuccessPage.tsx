@@ -1,6 +1,7 @@
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useSearchParams } from 'react-router-dom';
-import { CheckCircle2, Clock, CalendarDays, Hash, ArrowRight } from 'lucide-react';
+import { CheckCircle2, Clock, CalendarDays, Copy, Check, BookmarkCheck } from 'lucide-react';
 
 import { registrationsApi } from '@/api/registrationsApi';
 import { Button } from '@/components/ui/button';
@@ -9,6 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 export function RegistrationSuccessPage() {
   const [params] = useSearchParams();
   const id = params.get('id');
+  const [copied, setCopied] = useState(false);
 
   const { data: registration, isLoading } = useQuery({
     queryKey: ['registration-status', id],
@@ -16,6 +18,13 @@ export function RegistrationSuccessPage() {
     select: (res) => res.data.data?.registration,
     enabled: !!id,
   });
+
+  const handleCopy = () => {
+    if (!registration?.registrationNumber) return;
+    navigator.clipboard.writeText(registration.registrationNumber);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-4 py-12">
@@ -27,60 +36,70 @@ export function RegistrationSuccessPage() {
 
         <h1 className="text-2xl font-bold text-slate-800 mb-2">Registration Submitted!</h1>
         <p className="text-slate-500 mb-8 leading-relaxed">
-          Your registration has been submitted successfully.
-          You will receive your QR code once your payment receipt is verified by our team.
+          Your registration has been received. Save your reference number below —
+          you can use it anytime to check your approval status and QR code.
         </p>
 
-        {/* Registration details card */}
+        {/* Reference number — most prominent element */}
         {isLoading ? (
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 mb-6 space-y-3 text-left">
-            <Skeleton className="h-4 w-32" />
-            <Skeleton className="h-6 w-48" />
-            <Skeleton className="h-4 w-full" />
+          <div className="bg-white rounded-2xl border-2 border-blue-200 p-6 mb-5">
+            <Skeleton className="h-4 w-40 mx-auto mb-3" />
+            <Skeleton className="h-10 w-56 mx-auto" />
           </div>
         ) : registration ? (
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 mb-6 text-left space-y-4">
-            <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
-              <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
-                <Hash className="w-5 h-5 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-xs text-slate-400 font-medium">Registration Number</p>
-                <p className="font-bold text-slate-800 text-lg tracking-wide">
-                  {registration.registrationNumber}
-                </p>
-              </div>
+          <div className="bg-blue-50 rounded-2xl border-2 border-blue-200 p-6 mb-5">
+            <p className="text-xs font-semibold text-blue-500 uppercase tracking-widest mb-2">
+              Your Unique Reference Number
+            </p>
+            <div className="flex items-center justify-center gap-3 mb-3">
+              <span className="text-3xl font-bold text-blue-700 tracking-widest font-mono">
+                {registration.registrationNumber}
+              </span>
+              <button
+                onClick={handleCopy}
+                title="Copy reference number"
+                className="p-2 rounded-lg bg-blue-100 hover:bg-blue-200 text-blue-600 transition-colors"
+              >
+                {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+              </button>
             </div>
-
-            <div className="grid grid-cols-1 gap-3 text-sm">
-              <InfoRow icon={CalendarDays} label="Name" value={registration.fullName} />
-              <InfoRow icon={CalendarDays} label="Email" value={registration.email} />
-              {typeof registration.eventId === 'object' && registration.eventId !== null && 'name' in registration.eventId && (
-                <InfoRow icon={CalendarDays} label="Event" value={(registration.eventId as { name: string }).name} />
-              )}
-            </div>
-
-            <div className="flex items-center gap-2 bg-amber-50 rounded-lg px-4 py-3 mt-2">
-              <Clock className="w-4 h-4 text-amber-500 shrink-0" />
-              <p className="text-sm text-amber-700">
-                Status: <strong className="capitalize">{registration.status}</strong> — pending review
-              </p>
+            <div className="flex items-center justify-center gap-1.5 text-xs text-blue-600 bg-blue-100 rounded-lg px-3 py-2">
+              <BookmarkCheck className="w-3.5 h-3.5 shrink-0" />
+              Save this number — use it to check your status from the home page
             </div>
           </div>
         ) : null}
 
+        {/* Registration details */}
+        {!isLoading && registration && (
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 mb-5 text-left space-y-2.5">
+            <InfoRow label="Name" value={registration.fullName} />
+            <InfoRow label="Email" value={registration.email} />
+            {typeof registration.eventId === 'object' && registration.eventId !== null && 'name' in registration.eventId && (
+              <InfoRow label="Event" value={(registration.eventId as { name: string }).name} />
+            )}
+            <div className="flex items-center gap-2 bg-amber-50 rounded-lg px-3 py-2.5 mt-1">
+              <Clock className="w-4 h-4 text-amber-500 shrink-0" />
+              <p className="text-sm text-amber-700">
+                Status: <strong className="capitalize">{registration.status}</strong> — awaiting review
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* What happens next */}
-        <div className="bg-blue-50 rounded-2xl border border-blue-100 p-5 mb-8 text-left">
-          <p className="text-sm font-semibold text-blue-800 mb-3">What happens next?</p>
-          <ol className="space-y-2 text-sm text-blue-700">
+        <div className="bg-slate-50 rounded-2xl border border-slate-200 p-5 mb-8 text-left">
+          <p className="text-sm font-semibold text-slate-700 mb-3">What happens next?</p>
+          <ol className="space-y-2 text-sm text-slate-600">
             {[
               'Our team reviews your payment receipt',
               'Your registration gets approved',
               'A unique QR code is generated for you',
+              'Visit the home page and enter your reference number to download your QR',
               'Present your QR code at the event entrance',
             ].map((step, i) => (
               <li key={i} className="flex items-start gap-2">
-                <span className="w-5 h-5 rounded-full bg-blue-200 text-blue-800 text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
+                <span className="w-5 h-5 rounded-full bg-blue-100 text-blue-700 text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
                   {i + 1}
                 </span>
                 {step}
@@ -92,25 +111,20 @@ export function RegistrationSuccessPage() {
         {/* Actions */}
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Button asChild variant="outline">
-            <Link to="/">Browse More Events</Link>
+            <Link to="/">
+              <CalendarDays className="w-4 h-4 mr-1.5" />
+              Browse More Events
+            </Link>
           </Button>
-          {id && (
-            <Button asChild>
-              <Link to={`/registration/${id}/qr`}>
-                Check QR Status
-                <ArrowRight className="w-4 h-4 ml-1.5" />
-              </Link>
-            </Button>
-          )}
         </div>
       </div>
     </div>
   );
 }
 
-function InfoRow({ label, value }: { icon: React.ElementType; label: string; value: string }) {
+function InfoRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex justify-between gap-2">
+    <div className="flex justify-between gap-2 text-sm">
       <span className="text-slate-400">{label}</span>
       <span className="text-slate-700 font-medium text-right">{value}</span>
     </div>
