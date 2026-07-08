@@ -72,60 +72,66 @@ export function EventDetailPage() {
         </div>
       </div>
 
-      <h1 className="text-3xl font-bold text-slate-800 mb-3">{event.name}</h1>
-      <p className="text-slate-600 leading-relaxed mb-6 whitespace-pre-line">{event.description}</p>
+      <h1 className="text-2xl font-bold text-slate-800 mb-1.5">{event.name}</h1>
+      <p className="text-slate-500 leading-relaxed mb-4 whitespace-pre-line text-sm">{event.description}</p>
 
-      <Separator className="mb-6" />
+      <Separator className="mb-4" />
 
-      {/* Details grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-7">
+      {/* Details grid — compact 2-col */}
+      <div className="grid grid-cols-2 gap-2 mb-4">
         <InfoBlock icon={CalendarDays} label="Event Date">
-          {format(new Date(event.eventDate), 'EEEE, MMMM d, yyyy')}<br />
-          <span className="text-slate-400 text-xs">{format(new Date(event.eventDate), 'h:mm a')}</span>
+          {format(new Date(event.eventDate), 'EEE, MMM d, yyyy')}
+          <span className="text-slate-400"> · {format(new Date(event.eventDate), 'h:mm a')}</span>
         </InfoBlock>
         <InfoBlock icon={MapPin} label="Venue">{event.venue}</InfoBlock>
         <InfoBlock icon={CreditCard} label="Registration Fee">
           {event.registrationFee === 0 ? 'Free' : `LKR ${event.registrationFee.toLocaleString()}`}
+        </InfoBlock>
+        <InfoBlock icon={CalendarDays} label="Registration Window">
+          {format(new Date(event.registrationOpenDate), 'MMM d')} – {format(new Date(event.registrationCloseDate), 'MMM d, yyyy')}
         </InfoBlock>
         {event.maxParticipants && (
           <InfoBlock icon={Users} label="Capacity">
             {event.registrationCount} / {event.maxParticipants} registered
           </InfoBlock>
         )}
-        <InfoBlock icon={CalendarDays} label="Registration Window">
-          {format(new Date(event.registrationOpenDate), 'MMM d')} –{' '}
-          {format(new Date(event.registrationCloseDate), 'MMM d, yyyy')}
-        </InfoBlock>
       </div>
 
-      {/* Bank Details */}
+      {/* Bank Details — compact inline rows */}
       {event.registrationFee > 0 && (
-        <div className="bg-blue-50 rounded-xl p-5 mb-7 border border-blue-100">
-          <div className="flex items-center gap-2 mb-3 text-blue-800 font-medium">
-            <Building2 className="w-4 h-4" />
+        <div className="bg-blue-50 rounded-xl px-4 py-3 mb-4 border border-blue-100">
+          <div className="flex items-center gap-1.5 mb-2 text-blue-700 text-xs font-semibold uppercase tracking-wide">
+            <Building2 className="w-3.5 h-3.5" />
             Bank Transfer Details
           </div>
-          <div className="grid grid-cols-2 gap-2 text-sm">
-            <span className="text-slate-500">Bank</span>
-            <span className="text-slate-800 font-medium">{event.bankDetails.bankName}</span>
-            <span className="text-slate-500">Account Name</span>
-            <span className="text-slate-800 font-medium">{event.bankDetails.accountName}</span>
-            <span className="text-slate-500">Account Number</span>
-            <span className="text-slate-800 font-medium">{event.bankDetails.accountNumber}</span>
-            <span className="text-slate-500">Branch</span>
-            <span className="text-slate-800 font-medium">{event.bankDetails.branch}</span>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+            {[
+              ['Bank', event.bankDetails.bankName],
+              ['Account Name', event.bankDetails.accountName],
+              ['Account No.', event.bankDetails.accountNumber],
+              ['Branch', event.bankDetails.branch],
+            ].map(([label, value]) => (
+              <div key={label} className="contents">
+                <span className="text-slate-400 text-xs">{label}</span>
+                <span className="text-slate-700 font-medium text-xs">{value}</span>
+              </div>
+            ))}
           </div>
         </div>
       )}
 
-      {/* CTA */}
-      {isRegistrationOpen && (
-        <Button asChild size="lg" className="w-full sm:w-auto">
+      {/* CTA — always full width */}
+      {isRegistrationOpen ? (
+        <Button asChild size="lg" className="w-full">
           <Link to={`/events/${event.slug}/register`}>
             Register for this Event
             <ArrowRight className="w-4 h-4 ml-2" />
           </Link>
         </Button>
+      ) : (
+        <div className="w-full text-center py-3 rounded-xl bg-slate-100 text-slate-400 text-sm font-medium">
+          Registration is closed
+        </div>
       )}
 
       {/* Status check — participants use the same shared link to track their registration */}
@@ -138,11 +144,11 @@ export function EventDetailPage() {
 
 function InfoBlock({ icon: Icon, label, children }: { icon: React.ElementType; label: string; children: React.ReactNode }) {
   return (
-    <div className="flex gap-3 p-4 bg-slate-50 rounded-xl border border-slate-100">
-      <Icon className="w-5 h-5 text-blue-500 mt-0.5 shrink-0" />
-      <div>
+    <div className="flex gap-2.5 p-3 bg-slate-50 rounded-xl border border-slate-100">
+      <Icon className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
+      <div className="min-w-0">
         <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-0.5">{label}</p>
-        <p className="text-sm text-slate-700 font-medium">{children}</p>
+        <p className="text-xs text-slate-700 font-semibold leading-snug">{children}</p>
       </div>
     </div>
   );
