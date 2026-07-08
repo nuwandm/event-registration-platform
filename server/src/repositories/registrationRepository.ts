@@ -85,6 +85,10 @@ export const registrationRepository = {
       .lean() as unknown as LeanRegistration | null;
   },
 
+  async deleteById(id: string): Promise<void> {
+    await Registration.findByIdAndDelete(id);
+  },
+
   async countByEvent(eventId: string): Promise<Record<string, number>> {
     const results = await Registration.aggregate([
       { $match: { eventId: new (require('mongoose').Types.ObjectId)(eventId) } },

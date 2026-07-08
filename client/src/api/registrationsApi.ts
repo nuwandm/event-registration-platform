@@ -64,4 +64,10 @@ export const registrationsApi = {
 
   reject: (id: string, remarks: string) =>
     api.put<ApiResponse<{ registration: Registration }>>(`/admin/registrations/${id}/reject`, { remarks }),
+
+  update: (id: string, payload: { status?: string; attendanceStatus?: string; adminRemarks?: string }) =>
+    api.patch<ApiResponse<{ registration: Registration }>>(`/admin/registrations/${id}`, payload),
+
+  remove: (id: string, reason: string) =>
+    api.delete<ApiResponse>(`/admin/registrations/${id}`, { data: { reason } }),
 };

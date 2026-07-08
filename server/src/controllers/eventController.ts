@@ -93,9 +93,12 @@ export const eventController = {
       }
       if (!req.admin) throw new AppError('Unauthorized', 401);
 
-      // bankDetails may come as JSON string from multipart form
+      // bankDetails and bannerPosition may come as JSON strings from multipart form
       if (typeof req.body.bankDetails === 'string') {
         req.body.bankDetails = JSON.parse(req.body.bankDetails);
+      }
+      if (typeof req.body.bannerPosition === 'string') {
+        try { req.body.bannerPosition = JSON.parse(req.body.bannerPosition); } catch { delete req.body.bannerPosition; }
       }
 
       const event = await eventService.createEvent(req.body, String(req.admin._id), req.file);
@@ -109,6 +112,9 @@ export const eventController = {
     try {
       if (typeof req.body.bankDetails === 'string') {
         req.body.bankDetails = JSON.parse(req.body.bankDetails);
+      }
+      if (typeof req.body.bannerPosition === 'string') {
+        try { req.body.bannerPosition = JSON.parse(req.body.bannerPosition); } catch { delete req.body.bannerPosition; }
       }
       const event = await eventService.updateEvent(req.params.id, req.body, req.file);
       res.json({ success: true, message: 'Event updated', data: { event } });

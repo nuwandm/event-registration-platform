@@ -136,6 +136,40 @@ export const registrationController = {
       next(error);
     }
   },
+
+  // DELETE /api/admin/registrations/:id — Admin
+  async deleteRegistration(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { reason } = req.body as { reason?: string };
+      if (!reason || !reason.trim()) {
+        res.status(400).json({ success: false, message: 'Deletion reason is required' });
+        return;
+      }
+      await registrationService.deleteRegistration(req.params.id, reason.trim());
+      res.json({ success: true, message: 'Registration deleted' });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  // PATCH /api/admin/registrations/:id — Admin (manual edit)
+  async updateRegistration(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { status, attendanceStatus, adminRemarks } = req.body as {
+        status?: 'pending' | 'approved' | 'rejected';
+        attendanceStatus?: 'attended' | 'not_attended';
+        adminRemarks?: string;
+      };
+      const registration = await registrationService.updateRegistration(req.params.id, {
+        status,
+        attendanceStatus,
+        adminRemarks,
+      });
+      res.json({ success: true, message: 'Registration updated', data: { registration } });
+    } catch (error) {
+      next(error);
+    }
+  },
 };
 
 // Needed for type reference

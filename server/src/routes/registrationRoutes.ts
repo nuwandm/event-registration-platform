@@ -26,5 +26,7 @@ router.get('/admin/registrations', authGuard, registrationController.getAllRegis
 router.get('/admin/registrations/:id', authGuard, registrationController.getRegistrationById);
 router.put('/admin/registrations/:id/approve', authGuard, registrationController.approveRegistration);
 router.put('/admin/registrations/:id/reject', authGuard, registrationController.rejectRegistration);
+router.patch('/admin/registrations/:id', authGuard, registrationController.updateRegistration);
+router.delete('/admin/registrations/:id', authGuard, registrationController.deleteRegistration);
 
 export default router;

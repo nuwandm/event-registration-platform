@@ -153,4 +153,53 @@ export const registrationService = {
     if (!updated) throw new AppError('Registration not found', 404);
     return updated;
   },
+
+  async deleteRegistration(id: string, _reason: string): Promise<void> {
+    const reg = await registrationRepository.findById(id);
+    if (!reg) throw new AppError('Registration not found', 404);
+    await registrationRepository.deleteById(id);
+  },
+
+  async updateRegistration(
+    id: string,
+    payload: { status?: 'pending' | 'approved' | 'rejected'; attendanceStatus?: 'attended' | 'not_attended'; adminRemarks?: string }
+  ): Promise<IRegistration> {
+    const reg = await registrationRepository.findById(id);
+    if (!reg) throw new AppError('Registration not found', 404);
+
+    const update: Partial<IRegistration> = {};
+
+    if (payload.status && payload.status !== reg.status) {
+      // If promoting to approved and no QR yet, generate one
+      if (payload.status === 'approved' && !reg.qrToken) {
+        const { qrService } = await import('./qrService');
+        const { token, qrCodeUrl } = await qrService.generateQR(id);
+        update.qrToken = token;
+        update.qrCodeUrl = qrCodeUrl;
+      }
+      update.status = payload.status;
+    }
+
+    if (payload.attendanceStatus !== undefined) {
+      const effectiveStatus = payload.status ?? reg.status;
+      if (effectiveStatus !== 'approved') {
+        throw new AppError('Attendance can only be set for approved registrations', 400);
+      }
+      update.attendanceStatus = payload.attendanceStatus;
+      if (payload.attendanceStatus === 'attended' && !reg.attendanceTime) {
+        update.attendanceTime = new Date();
+      }
+      if (payload.attendanceStatus === 'not_attended') {
+        update.attendanceTime = undefined;
+      }
+    }
+
+    if (payload.adminRemarks !== undefined) {
+      update.adminRemarks = payload.adminRemarks;
+    }
+
+    const updated = await registrationRepository.updateById(id, update);
+    if (!updated) throw new AppError('Registration not found', 404);
+    return updated;
+  },
 };

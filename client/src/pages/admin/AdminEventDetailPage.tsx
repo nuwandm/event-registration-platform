@@ -6,23 +6,29 @@ import {
   ArrowLeft, CalendarDays, MapPin, CreditCard, Users, Building2,
   Pencil, Trash2, Link2, UserCog, DoorOpen, DoorClosed,
   CheckCircle2, Clock, Eye, Search, ChevronLeft, ChevronRight,
+  SquarePen,
 } from 'lucide-react';
 import { format } from 'date-fns';
 
 import { eventsApi } from '@/api/eventsApi';
 import { registrationsApi } from '@/api/registrationsApi';
 import { usersApi } from '@/api/usersApi';
-import type { StaffUser } from '@/types';
+import type { Registration, StaffUser } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import { EventFormDialog } from '@/components/admin/EventFormDialog';
 import { RegistrationDetailSheet } from '@/components/admin/RegistrationDetailSheet';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
+} from '@/components/ui/dialog';
 
 // ── Tabs ──────────────────────────────────────────────────────────────────────
 const TABS = ['Details', 'Participants', 'Staff'] as const;
@@ -292,17 +298,71 @@ function DetailsTab({ event }: { event: import('@/types').Event }) {
 
 // ── Participants tab ───────────────────────────────────────────────────────────
 function ParticipantsTab({ eventId }: { eventId: string }) {
+  const qc = useQueryClient();
   const [page, setPage] = useState(1);
   const [activeTab, setActiveTab] = useState('');
   const [search, setSearch] = useState('');
   const [searchInput, setSearchInput] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
+  // Delete state
+  const [deleteTarget, setDeleteTarget] = useState<Registration | null>(null);
+  const [deleteReason, setDeleteReason] = useState('');
+
+  // Edit state
+  const [editTarget, setEditTarget] = useState<Registration | null>(null);
+  const [editStatus, setEditStatus] = useState('');
+  const [editAttendance, setEditAttendance] = useState('');
+  const [editRemarks, setEditRemarks] = useState('');
+
   const { data, isLoading } = useQuery({
     queryKey: ['event-registrations', eventId, page, activeTab, search],
     queryFn: () => registrationsApi.getAll({ page, limit: 15, status: activeTab || undefined, search: search || undefined, eventId }),
     select: (res) => res.data.data,
   });
+
+  const invalidate = () => {
+    qc.invalidateQueries({ queryKey: ['event-registrations', eventId] });
+    qc.invalidateQueries({ queryKey: ['admin-event-detail'] });
+  };
+
+  const deleteMutation = useMutation({
+    mutationFn: () => registrationsApi.remove(deleteTarget!._id, deleteReason),
+    onSuccess: () => {
+      toast.success('Participant removed');
+      setDeleteTarget(null);
+      setDeleteReason('');
+      invalidate();
+    },
+    onError: (err: unknown) => {
+      const msg = (err as { response?: { data?: { message?: string } } }).response?.data?.message;
+      toast.error(msg ?? 'Failed to delete registration');
+    },
+  });
+
+  const editMutation = useMutation({
+    mutationFn: () => registrationsApi.update(editTarget!._id, {
+      status: editStatus || undefined,
+      attendanceStatus: editAttendance || undefined,
+      adminRemarks: editRemarks || undefined,
+    }),
+    onSuccess: () => {
+      toast.success('Participant updated');
+      setEditTarget(null);
+      invalidate();
+    },
+    onError: (err: unknown) => {
+      const msg = (err as { response?: { data?: { message?: string } } }).response?.data?.message;
+      toast.error(msg ?? 'Failed to update registration');
+    },
+  });
+
+  const openEdit = (reg: Registration) => {
+    setEditTarget(reg);
+    setEditStatus(reg.status);
+    setEditAttendance(reg.attendanceStatus);
+    setEditRemarks(reg.adminRemarks ?? '');
+  };
 
   const registrations = data?.data ?? [];
   const totalPages = data?.totalPages ?? 1;
@@ -348,7 +408,7 @@ function ParticipantsTab({ eventId }: { eventId: string }) {
                 <th className="text-left px-4 py-2.5 text-xs font-medium text-slate-500">Status</th>
                 <th className="text-left px-4 py-2.5 text-xs font-medium text-slate-500 hidden md:table-cell">Attendance</th>
                 <th className="text-left px-4 py-2.5 text-xs font-medium text-slate-500 hidden lg:table-cell">Submitted</th>
-                <th className="px-4 py-2.5" />
+                <th className="px-4 py-2.5 text-right text-xs font-medium text-slate-500">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
@@ -374,10 +434,20 @@ function ParticipantsTab({ eventId }: { eventId: string }) {
                     {format(new Date(reg.createdAt), 'MMM d, yyyy')}
                   </td>
                   <td className="px-4 py-2.5">
-                    <button onClick={() => setSelectedId(reg._id)}
-                      className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-blue-600 transition-colors">
-                      <Eye className="w-3.5 h-3.5" />
-                    </button>
+                    <div className="flex items-center justify-end gap-0.5">
+                      <button onClick={() => setSelectedId(reg._id)} title="View details"
+                        className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-blue-600 transition-colors">
+                        <Eye className="w-3.5 h-3.5" />
+                      </button>
+                      <button onClick={() => openEdit(reg)} title="Edit participant"
+                        className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-amber-600 transition-colors">
+                        <SquarePen className="w-3.5 h-3.5" />
+                      </button>
+                      <button onClick={() => { setDeleteTarget(reg); setDeleteReason(''); }} title="Remove participant"
+                        className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors">
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -397,6 +467,129 @@ function ParticipantsTab({ eventId }: { eventId: string }) {
       </div>
 
       <RegistrationDetailSheet registrationId={selectedId} onClose={() => setSelectedId(null)} />
+
+      {/* Delete dialog */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-red-600">
+              <Trash2 className="w-4 h-4" /> Remove Participant
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              You are about to permanently remove <strong>{deleteTarget?.fullName}</strong> from this event. This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="mt-2">
+            <Label className="text-sm">Reason for removal <span className="text-red-500">*</span></Label>
+            <Textarea
+              className="mt-1.5"
+              placeholder="e.g. Duplicate registration — same person registered twice under different NICs."
+              value={deleteReason}
+              onChange={(e) => setDeleteReason(e.target.value)}
+              rows={3}
+            />
+          </div>
+          <AlertDialogFooter className="mt-4">
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700"
+              disabled={deleteMutation.isPending}
+              onClick={(e) => {
+                e.preventDefault();
+                if (!deleteReason.trim()) { toast.error('Removal reason is required'); return; }
+                deleteMutation.mutate();
+              }}
+            >
+              {deleteMutation.isPending ? 'Removing…' : 'Remove Participant'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Edit dialog */}
+      <Dialog open={!!editTarget} onOpenChange={(open) => { if (!open) setEditTarget(null); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <SquarePen className="w-4 h-4 text-amber-500" /> Edit Participant
+            </DialogTitle>
+            <DialogDescription>
+              Manually update status, attendance, or remarks for <strong>{editTarget?.fullName}</strong>.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            {/* Registration status */}
+            <div>
+              <Label className="text-sm font-medium text-slate-700">Registration Status</Label>
+              <div className="flex gap-2 mt-2 flex-wrap">
+                {(['pending', 'approved', 'rejected'] as const).map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => setEditStatus(s)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors capitalize ${
+                      editStatus === s
+                        ? s === 'approved' ? 'bg-emerald-500 text-white border-emerald-500'
+                          : s === 'rejected' ? 'bg-red-500 text-white border-red-500'
+                          : 'bg-amber-400 text-white border-amber-400'
+                        : 'bg-white text-slate-600 border-slate-200 hover:border-slate-400'
+                    }`}
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Attendance — only meaningful for approved */}
+            {editStatus === 'approved' && (
+              <div>
+                <Label className="text-sm font-medium text-slate-700">Attendance</Label>
+                <div className="flex gap-2 mt-2">
+                  {(['not_attended', 'attended'] as const).map((a) => (
+                    <button
+                      key={a}
+                      type="button"
+                      onClick={() => setEditAttendance(a)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                        editAttendance === a
+                          ? a === 'attended' ? 'bg-emerald-500 text-white border-emerald-500' : 'bg-slate-400 text-white border-slate-400'
+                          : 'bg-white text-slate-600 border-slate-200 hover:border-slate-400'
+                      }`}
+                    >
+                      {a === 'attended' ? 'Attended' : 'Not Attended'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Admin remarks */}
+            <div>
+              <Label className="text-sm font-medium text-slate-700">Admin Remarks</Label>
+              <Textarea
+                className="mt-1.5"
+                placeholder="Optional notes visible to admin only…"
+                value={editRemarks}
+                onChange={(e) => setEditRemarks(e.target.value)}
+                rows={2}
+              />
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setEditTarget(null)}>Cancel</Button>
+            <Button
+              className="bg-amber-500 hover:bg-amber-600 text-white"
+              disabled={editMutation.isPending}
+              onClick={() => editMutation.mutate()}
+            >
+              {editMutation.isPending ? 'Saving…' : 'Save Changes'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
