@@ -158,8 +158,11 @@ export const registrationService = {
     const reg = await registrationRepository.findById(id);
     if (!reg) throw new AppError('Registration not found', 404);
     await registrationRepository.deleteById(id);
-    // Decrement the event's registrationCount so the badge stays accurate
-    await eventRepository.decrementRegistrationCount(String(reg.eventId));
+    // reg.eventId is populated, so extract _id from the object if needed
+    const eventId = typeof reg.eventId === 'object' && reg.eventId !== null
+      ? String((reg.eventId as { _id: unknown })._id)
+      : String(reg.eventId);
+    await eventRepository.decrementRegistrationCount(eventId);
   },
 
   async updateRegistration(
