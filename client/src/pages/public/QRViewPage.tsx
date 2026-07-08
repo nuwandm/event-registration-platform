@@ -70,7 +70,6 @@ export function QRViewPage() {
     return (
       <div className="max-w-md mx-auto px-4 py-16 text-center">
         <p className="text-slate-500 mb-4">Registration not found.</p>
-        <Button asChild variant="outline"><Link to={`/${orgSlug}`}>Back to events</Link></Button>
       </div>
     );
   }

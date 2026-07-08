@@ -93,6 +93,7 @@ export interface Event {
   status: EventStatus;
   registrationCount: number;
   questions: Question[];
+  contactInfo?: string;
   createdAt: string;
   updatedAt: string;
 }

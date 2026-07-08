@@ -244,13 +244,6 @@ export function RegistrationStatusPage() {
           to check back anytime.
         </p>
 
-        <div className="flex justify-center mt-4">
-          <Button asChild variant="ghost" size="sm">
-            <Link to={`/${orgSlug}`}>
-              <CalendarDays className="w-4 h-4 mr-1.5" /> Browse More Events
-            </Link>
-          </Button>
-        </div>
       </div>
     </div>
   );

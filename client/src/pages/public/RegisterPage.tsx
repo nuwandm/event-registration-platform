@@ -6,7 +6,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
   CalendarDays, MapPin, CreditCard, Building2, Upload, X, FileText,
   User, Mail, Phone, MapPin as MapPinIcon, Briefcase, ArrowLeft, CheckCircle2,
-  ListChecks,
+  ListChecks, MessageCircle,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
@@ -302,7 +302,6 @@ export function RegisterPage() {
     return (
       <div className="max-w-3xl mx-auto px-4 py-16 text-center">
         <p className="text-slate-500 mb-4">Event not found or registration is closed.</p>
-        <Button asChild variant="outline"><Link to={`/${orgSlug}`}>Back to events</Link></Button>
       </div>
     );
   }
@@ -319,7 +318,6 @@ export function RegisterPage() {
         </div>
         <h2 className="text-xl font-bold text-slate-800 mb-2">Registration Not Available</h2>
         <p className="text-slate-500 mb-6">Registration for this event is currently not open.</p>
-        <Button asChild variant="outline"><Link to={`/${orgSlug}`}>Browse Events</Link></Button>
       </div>
     );
   }
@@ -386,6 +384,17 @@ export function RegisterPage() {
           </div>
         </div>
       </div>
+
+      {/* Contact info banner */}
+      {event.contactInfo && (
+        <div className="mb-5 flex items-start gap-3 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3">
+          <MessageCircle className="w-4 h-4 mt-0.5 shrink-0" style={{ color: brand }} />
+          <div>
+            <p className="text-xs font-semibold text-slate-700 mb-0.5">Need help?</p>
+            <p className="text-sm text-slate-600 break-all">{event.contactInfo}</p>
+          </div>
+        </div>
+      )}
 
       <form
         onSubmit={handleSubmit((d) => {

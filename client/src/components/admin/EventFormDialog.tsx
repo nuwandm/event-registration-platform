@@ -3,7 +3,7 @@ import { useForm, Controller, useFieldArray, type Resolver, type Control, type U
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { ImagePlus, X, CalendarDays, CreditCard, Move, ListPlus, Trash2, Plus } from 'lucide-react';
+import { ImagePlus, X, CalendarDays, CreditCard, Move, ListPlus, Trash2, Plus, Phone } from 'lucide-react';
 
 import { eventFormSchema, type EventFormValues, type QuestionFormValue } from '@/schemas/event';
 import { useTenant } from '@/context/TenantContext';
@@ -245,6 +245,7 @@ export function EventFormDialog({ open, onClose, event }: EventFormDialogProps) 
         maxParticipants: event.maxParticipants ?? ('' as unknown as number),
         status: event.status,
         bankDetails: event.bankDetails,
+        contactInfo: event.contactInfo ?? '',
         questions: (event.questions ?? []).map((q) => ({
           _id: q._id,
           label: q.label,
@@ -448,6 +449,20 @@ export function EventFormDialog({ open, onClose, event }: EventFormDialogProps) 
                 <Label htmlFor="venue">Venue *</Label>
                 <Input id="venue" {...register('venue')} placeholder="e.g. BMICH, Colombo" className="mt-1" />
                 {errors.venue && <p className="text-xs text-red-500 mt-0.5">{errors.venue.message}</p>}
+              </div>
+              <div>
+                <Label htmlFor="contactInfo" className="flex items-center gap-1.5">
+                  <Phone className="w-3.5 h-3.5 text-slate-400" />
+                  Contact Info
+                  <span className="text-xs font-normal text-slate-400">(optional)</span>
+                </Label>
+                <Input
+                  id="contactInfo"
+                  {...register('contactInfo')}
+                  placeholder="e.g. +94 77 123 4567 · support@example.com · wa.me/94771234567"
+                  className="mt-1"
+                />
+                <p className="text-xs text-slate-400 mt-0.5">Shown on the registration page so participants can reach you.</p>
               </div>
             </div>
           </div>

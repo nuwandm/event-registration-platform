@@ -36,7 +36,6 @@ export function EventDetailPage() {
     return (
       <div className="max-w-3xl mx-auto px-4 py-16 text-center">
         <p className="text-slate-500 mb-4">Event not found or no longer available.</p>
-        <Button asChild variant="outline"><Link to={`/${orgSlug}`}>Back to events</Link></Button>
       </div>
     );
   }
@@ -47,10 +46,6 @@ export function EventDetailPage() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-10">
-      <Link to={`/${orgSlug}`} className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-blue-600 mb-6 transition-colors">
-        <ArrowLeft className="w-4 h-4" />
-        Back to events
-      </Link>
 
       {/* Banner */}
       <div className="relative rounded-2xl overflow-hidden mb-7 bg-linear-to-br from-blue-500 to-indigo-600">

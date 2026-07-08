@@ -118,12 +118,6 @@ export function RegistrationSuccessPage() {
 
         {/* Actions */}
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <Button asChild variant="outline">
-            <Link to={`/${orgSlug}`}>
-              <CalendarDays className="w-4 h-4 mr-1.5" />
-              Browse More Events
-            </Link>
-          </Button>
         </div>
       </div>
     </div>

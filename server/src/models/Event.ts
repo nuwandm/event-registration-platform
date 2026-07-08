@@ -39,6 +39,7 @@ export interface IEvent extends Document {
   status: EventStatus;
   registrationCount: number;
   questions: IQuestion[];
+  contactInfo?: string;
   createdBy: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
@@ -134,6 +135,7 @@ const eventSchema = new Schema<IEvent>(
     },
     registrationCount: { type: Number, default: 0 },
     questions: { type: [questionSchema], default: [] },
+    contactInfo: { type: String, maxlength: 500 },
     createdBy: {
       type: Schema.Types.ObjectId,
       ref: 'Admin',
