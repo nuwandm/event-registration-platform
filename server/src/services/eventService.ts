@@ -23,6 +23,7 @@ export interface CreateEventDTO {
   };
   status?: 'draft' | 'published' | 'closed';
   bannerPosition?: { x: number; y: number };
+  questions?: Array<{ label: string; type: string; options: string[]; required: boolean }>;
 }
 
 export const eventService = {
@@ -61,8 +62,13 @@ export const eventService = {
       bannerImagePublicId = result.publicId;
     }
 
+    const questions = (dto.questions ?? []).map(({ label, type, options, required }) => ({
+      label, type, options, required,
+    }));
+
     const event = await eventRepository.create({
       ...dto,
+      questions,
       tenantId: tenantId as unknown as import('mongoose').Types.ObjectId,
       eventDate: new Date(dto.eventDate),
       registrationOpenDate: new Date(dto.registrationOpenDate),
@@ -90,6 +96,11 @@ export const eventService = {
     if (dto.eventDate) payload.eventDate = new Date(dto.eventDate);
     if (dto.registrationOpenDate) payload.registrationOpenDate = new Date(dto.registrationOpenDate);
     if (dto.registrationCloseDate) payload.registrationCloseDate = new Date(dto.registrationCloseDate);
+    if (dto.questions) {
+      payload.questions = dto.questions.map(({ label, type, options, required }) => ({
+        label, type, options, required,
+      })) as IEvent['questions'];
+    }
 
     if (bannerFile) {
       if (existing.bannerImagePublicId) {
