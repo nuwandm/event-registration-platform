@@ -9,6 +9,7 @@ export type ReportFormat = 'csv' | 'excel' | 'pdf';
 export type ReportType = 'registrations' | 'attendance';
 
 interface RegistrationRow {
+  eventName: string;
   registrationNumber: string;
   fullName: string;
   nic: string;
@@ -24,6 +25,7 @@ interface RegistrationRow {
 }
 
 interface AttendanceRow {
+  eventName: string;
   registrationNumber: string;
   fullName: string;
   email: string;
@@ -57,9 +59,13 @@ const fetchRegistrations = async (eventId?: string, status?: string): Promise<Re
   if (eventId) filter.eventId = eventId;
   if (status && status !== 'all') filter.status = status;
 
-  const docs = await Registration.find(filter).sort({ createdAt: -1 }).lean();
+  const docs = await Registration.find(filter)
+    .populate('eventId', 'name')
+    .sort({ createdAt: -1 })
+    .lean();
 
   return docs.map((r) => ({
+    eventName: (r.eventId as { name?: string } | null)?.name ?? '',
     registrationNumber: r.registrationNumber ?? '',
     fullName: r.fullName,
     nic: r.nic,
@@ -82,6 +88,7 @@ const fetchAttendance = async (eventId?: string): Promise<AttendanceRow[]> => {
   const docs = await AttendanceLog.find(filter)
     .sort({ scannedAt: -1 })
     .populate('registrationId', 'registrationNumber fullName email nic')
+    .populate('eventId', 'name')
     .lean();
 
   return docs.map((log) => {
@@ -92,6 +99,7 @@ const fetchAttendance = async (eventId?: string): Promise<AttendanceRow[]> => {
       nic?: string;
     } | null;
     return {
+      eventName: (log.eventId as { name?: string } | null)?.name ?? '',
       registrationNumber: reg?.registrationNumber ?? '',
       fullName: reg?.fullName ?? '',
       email: reg?.email ?? '',
@@ -286,12 +294,12 @@ export const reportService = {
     ]);
 
     const headers = [
-      'Reg. Number', 'Full Name', 'NIC / Passport', 'Email', 'Mobile',
+      'Event', 'Reg. Number', 'Full Name', 'NIC / Passport', 'Email', 'Mobile',
       'Address', 'Organization', 'Designation', 'Status',
       'Attendance', 'Attended At', 'Submitted At',
     ];
     const rows = data.map((r) => [
-      r.registrationNumber, r.fullName, r.nic, r.email, r.mobile,
+      r.eventName, r.registrationNumber, r.fullName, r.nic, r.email, r.mobile,
       r.address, r.organization, r.designation, r.status,
       r.attendanceStatus, r.attendanceTime, r.submittedAt,
     ]);
@@ -304,7 +312,7 @@ export const reportService = {
     if (fmt === 'excel') {
       return { buffer: await buildExcel(title, headers, rows, event), contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', filename: `registrations_${ts}.xlsx` };
     }
-    return { buffer: await buildPDF(title, headers.slice(0, 8), rows.map((r) => r.slice(0, 8)), event), contentType: 'application/pdf', filename: `registrations_${ts}.pdf` };
+    return { buffer: await buildPDF(title, headers.slice(0, 9), rows.map((r) => r.slice(0, 9)), event), contentType: 'application/pdf', filename: `registrations_${ts}.pdf` };
   },
 
   async generateAttendanceReport(
@@ -316,8 +324,8 @@ export const reportService = {
       fetchEventInfo(eventId),
     ]);
 
-    const headers = ['Reg. Number', 'Full Name', 'NIC / Passport', 'Email', 'Checked In At'];
-    const rows = data.map((r) => [r.registrationNumber, r.fullName, r.nic, r.email, r.checkedInAt]);
+    const headers = ['Event', 'Reg. Number', 'Full Name', 'NIC / Passport', 'Email', 'Checked In At'];
+    const rows = data.map((r) => [r.eventName, r.registrationNumber, r.fullName, r.nic, r.email, r.checkedInAt]);
     const title = 'Attendance Report';
     const ts = format(new Date(), 'yyyyMMdd_HHmm');
 
