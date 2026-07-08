@@ -1,4 +1,5 @@
 import { useRef, useState, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -240,39 +241,56 @@ interface KebabItem {
 }
 function KebabMenu({ items }: { items: KebabItem[] }) {
   const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState({ top: 0, right: 0 });
+  const btnRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
+    if (!open) return;
     const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      if (btnRef.current && !btnRef.current.contains(e.target as Node)) setOpen(false);
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
-  }, []);
+  }, [open]);
+
+  const handleOpen = () => {
+    if (btnRef.current) {
+      const r = btnRef.current.getBoundingClientRect();
+      setPos({ top: r.bottom + window.scrollY + 4, right: window.innerWidth - r.right });
+    }
+    setOpen((v) => !v);
+  };
 
   return (
-    <div ref={ref} className="relative">
+    <>
       <button
-        onClick={() => setOpen((v) => !v)}
+        ref={btnRef}
+        onClick={handleOpen}
         className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
       >
         <MoreVertical className="w-4 h-4" />
       </button>
-      {open && (
-        <div className="absolute right-0 top-8 z-50 w-52 bg-white rounded-xl border border-slate-200 shadow-lg py-1 animate-fade-in">
-          {items.map((item) => (
-            <button
-              key={item.label}
-              onClick={() => { item.onClick(); setOpen(false); }}
-              className={`w-full flex items-center gap-2.5 px-4 py-2.5 text-sm hover:bg-slate-50 transition-colors text-left ${item.className ?? 'text-slate-700'}`}
-            >
-              <item.icon className="w-4 h-4 shrink-0" />
-              {item.label}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
+      {open && typeof document !== 'undefined' &&
+        ReactDOM.createPortal(
+          <div
+            style={{ position: 'absolute', top: pos.top, right: pos.right, zIndex: 9999 }}
+            className="w-52 bg-white rounded-xl border border-slate-200 shadow-xl py-1 animate-fade-in"
+          >
+            {items.map((item) => (
+              <button
+                key={item.label}
+                onClick={() => { item.onClick(); setOpen(false); }}
+                className={`w-full flex items-center gap-2.5 px-4 py-2.5 text-sm hover:bg-slate-50 transition-colors text-left ${item.className ?? 'text-slate-700'}`}
+              >
+                <item.icon className="w-4 h-4 shrink-0" />
+                {item.label}
+              </button>
+            ))}
+          </div>,
+          document.body
+        )
+      }
+    </>
   );
 }
 
