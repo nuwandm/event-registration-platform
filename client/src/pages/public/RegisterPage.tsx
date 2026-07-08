@@ -403,7 +403,7 @@ export function RegisterPage() {
           <button
             type="submit"
             disabled={isPending}
-            className="w-full sm:w-auto min-w-45 inline-flex items-center justify-center gap-2 px-8 py-3 rounded-xl text-white font-semibold text-sm transition-opacity hover:opacity-90 disabled:opacity-60"
+            className="w-full sm:w-auto whitespace-nowrap inline-flex items-center justify-center gap-2 px-8 py-3 rounded-xl text-white font-semibold text-sm transition-opacity hover:opacity-90 disabled:opacity-60"
             style={{ background: brand }}
           >
             {isPending ? (
