@@ -79,19 +79,19 @@ export function EventDetailPage() {
 
       {/* Details grid — compact 2-col */}
       <div className="grid grid-cols-2 gap-2 mb-4">
-        <InfoBlock icon={CalendarDays} label="Event Date">
+        <InfoBlock icon={CalendarDays} label="Event Date" color="blue">
           {format(new Date(event.eventDate), 'EEE, MMM d, yyyy')}
-          <span className="text-slate-400"> · {format(new Date(event.eventDate), 'h:mm a')}</span>
+          <span className="opacity-70"> · {format(new Date(event.eventDate), 'h:mm a')}</span>
         </InfoBlock>
-        <InfoBlock icon={MapPin} label="Venue">{event.venue}</InfoBlock>
-        <InfoBlock icon={CreditCard} label="Registration Fee">
+        <InfoBlock icon={MapPin} label="Venue" color="violet">{event.venue}</InfoBlock>
+        <InfoBlock icon={CreditCard} label="Registration Fee" color="emerald">
           {event.registrationFee === 0 ? 'Free' : `LKR ${event.registrationFee.toLocaleString()}`}
         </InfoBlock>
-        <InfoBlock icon={CalendarDays} label="Registration Window">
+        <InfoBlock icon={CalendarDays} label="Registration Window" color="amber">
           {format(new Date(event.registrationOpenDate), 'MMM d')} – {format(new Date(event.registrationCloseDate), 'MMM d, yyyy')}
         </InfoBlock>
         {event.maxParticipants && (
-          <InfoBlock icon={Users} label="Capacity">
+          <InfoBlock icon={Users} label="Capacity" color="rose">
             {event.registrationCount} / {event.maxParticipants} registered
           </InfoBlock>
         )}
@@ -142,13 +142,26 @@ export function EventDetailPage() {
   );
 }
 
-function InfoBlock({ icon: Icon, label, children }: { icon: React.ElementType; label: string; children: React.ReactNode }) {
+const COLOR_MAP = {
+  blue:    { card: 'bg-blue-50 border-blue-100',     icon: 'bg-blue-100 text-blue-600',     label: 'text-blue-400',   value: 'text-blue-900' },
+  violet:  { card: 'bg-violet-50 border-violet-100', icon: 'bg-violet-100 text-violet-600', label: 'text-violet-400', value: 'text-violet-900' },
+  emerald: { card: 'bg-emerald-50 border-emerald-100', icon: 'bg-emerald-100 text-emerald-600', label: 'text-emerald-500', value: 'text-emerald-900' },
+  amber:   { card: 'bg-amber-50 border-amber-100',   icon: 'bg-amber-100 text-amber-600',   label: 'text-amber-500',  value: 'text-amber-900' },
+  rose:    { card: 'bg-rose-50 border-rose-100',     icon: 'bg-rose-100 text-rose-600',     label: 'text-rose-400',   value: 'text-rose-900' },
+};
+
+function InfoBlock({ icon: Icon, label, children, color = 'blue' }: {
+  icon: React.ElementType; label: string; children: React.ReactNode; color?: keyof typeof COLOR_MAP;
+}) {
+  const c = COLOR_MAP[color];
   return (
-    <div className="flex gap-2.5 p-3 bg-slate-50 rounded-xl border border-slate-100">
-      <Icon className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
+    <div className={`flex gap-2.5 p-3 rounded-xl border ${c.card}`}>
+      <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${c.icon}`}>
+        <Icon className="w-3.5 h-3.5" />
+      </div>
       <div className="min-w-0">
-        <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-0.5">{label}</p>
-        <p className="text-xs text-slate-700 font-semibold leading-snug">{children}</p>
+        <p className={`text-xs font-semibold uppercase tracking-wide mb-0.5 ${c.label}`}>{label}</p>
+        <p className={`text-xs font-semibold leading-snug ${c.value}`}>{children}</p>
       </div>
     </div>
   );
