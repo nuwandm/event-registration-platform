@@ -245,11 +245,15 @@ function KebabMenu({ items }: { items: KebabItem[] }) {
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState({ top: 0, right: 0 });
   const btnRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!open) return;
     const handler = (e: MouseEvent) => {
-      if (btnRef.current && !btnRef.current.contains(e.target as Node)) setOpen(false);
+      const target = e.target as Node;
+      const insideBtn = btnRef.current?.contains(target);
+      const insideMenu = menuRef.current?.contains(target);
+      if (!insideBtn && !insideMenu) setOpen(false);
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
@@ -275,13 +279,14 @@ function KebabMenu({ items }: { items: KebabItem[] }) {
       {open && typeof document !== 'undefined' &&
         ReactDOM.createPortal(
           <div
+            ref={menuRef}
             style={{ position: 'absolute', top: pos.top, right: pos.right, zIndex: 9999 }}
             className="w-52 bg-white rounded-xl border border-slate-200 shadow-xl py-1 animate-fade-in"
           >
             {items.map((item) => (
               <button
                 key={item.label}
-                onClick={() => { item.onClick(); setOpen(false); }}
+                onClick={() => { setOpen(false); item.onClick(); }}
                 className={`w-full flex items-center gap-2.5 px-4 py-2.5 text-sm hover:bg-slate-50 transition-colors text-left ${item.className ?? 'text-slate-700'}`}
               >
                 <item.icon className="w-4 h-4 shrink-0" />
