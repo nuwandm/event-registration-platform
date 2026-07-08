@@ -590,7 +590,7 @@ export function RegisterPage() {
       {/* Floating WhatsApp button */}
       {event.whatsappNumber && (
         <a
-          href={`https://wa.me/${event.whatsappNumber}`}
+          href={`https://wa.me/${event.whatsappNumber}?text=${encodeURIComponent(`Hi! I'd like to get more information about *${event.name}* (${format(new Date(event.eventDate), 'MMM d, yyyy · h:mm a')}). Could you please help me?`)}`}
           target="_blank"
           rel="noreferrer"
           className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-[#25D366] hover:bg-[#1ebe5d] text-white px-4 py-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 font-semibold text-sm"
