@@ -57,6 +57,8 @@ export const attendanceService = {
 
     const eventDoc = registration.eventId as unknown as IEvent;
     const eventId = String(eventDoc?._id ?? registration.eventId);
+    const regId = String(registration._id);
+    const logBase = { registrationId: regId, eventId, scannedBy: adminId, tenantId, ipAddress };
 
     // 3a. For staff: ensure the scanned QR belongs to their selected event
     if (restrictToEventId && eventId !== restrictToEventId) {
@@ -67,17 +69,16 @@ export const attendanceService = {
     if (!eventDoc?.admissionOpen) {
       return { outcome: 'invalid', message: 'Admission has not been opened for this event yet' };
     }
-    const regId = String(registration._id);
 
-    // 3. Validate token — constant-time compare not needed here since token is a UUID
+    // 3. Validate token
     if (registration.qrToken !== payload.token) {
-      await attendanceRepository.createLog({ registrationId: regId, eventId, scannedBy: adminId, ipAddress, status: 'invalid' });
+      await attendanceRepository.createLog({ ...logBase, status: 'invalid' });
       return { outcome: 'invalid', message: 'QR code token is invalid or has been tampered with' };
     }
 
     // 4. Check approval status
     if (registration.status !== 'approved') {
-      await attendanceRepository.createLog({ registrationId: regId, eventId, scannedBy: adminId, ipAddress, status: 'invalid' });
+      await attendanceRepository.createLog({ ...logBase, status: 'invalid' });
       return {
         outcome: 'invalid',
         message: `Registration is ${registration.status} — only approved registrations can enter`,
@@ -86,7 +87,7 @@ export const attendanceService = {
 
     // 5. Check duplicate scan
     if (registration.attendanceStatus === 'attended') {
-      await attendanceRepository.createLog({ registrationId: regId, eventId, scannedBy: adminId, ipAddress, status: 'duplicate' });
+      await attendanceRepository.createLog({ ...logBase, status: 'duplicate' });
       return {
         outcome: 'duplicate',
         message: 'Already checked in',
@@ -103,7 +104,7 @@ export const attendanceService = {
     });
 
     // 7. Write success log
-    await attendanceRepository.createLog({ registrationId: regId, eventId, scannedBy: adminId, ipAddress, status: 'success' });
+    await attendanceRepository.createLog({ ...logBase, status: 'success' });
 
     return {
       outcome: 'success',

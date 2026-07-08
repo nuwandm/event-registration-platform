@@ -8,6 +8,7 @@ export const attendanceRepository = {
     registrationId: string;
     eventId: string;
     scannedBy: string;
+    tenantId: string;
     ipAddress?: string;
     status: ScanStatus;
   }): Promise<IAttendanceLog> {
@@ -15,6 +16,7 @@ export const attendanceRepository = {
       registrationId: new mongoose.Types.ObjectId(payload.registrationId),
       eventId: new mongoose.Types.ObjectId(payload.eventId),
       scannedBy: new mongoose.Types.ObjectId(payload.scannedBy),
+      tenantId: new mongoose.Types.ObjectId(payload.tenantId),
       ipAddress: payload.ipAddress,
       status: payload.status,
       scannedAt: new Date(),
