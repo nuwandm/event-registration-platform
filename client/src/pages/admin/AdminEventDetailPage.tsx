@@ -531,8 +531,8 @@ function ParticipantsTab({ eventId }: { eventId: string }) {
 
       {/* Edit dialog */}
       <Dialog open={!!editTarget} onOpenChange={(open) => { if (!open) setEditTarget(null); }}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
+        <DialogContent className="sm:max-w-md flex flex-col max-h-[90vh]">
+          <DialogHeader className="shrink-0">
             <DialogTitle className="flex items-center gap-2">
               <SquarePen className="w-4 h-4 text-amber-500" /> Edit Participant
             </DialogTitle>
@@ -541,7 +541,7 @@ function ParticipantsTab({ eventId }: { eventId: string }) {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 py-2">
+          <div className="space-y-4 py-2 overflow-y-auto flex-1">
             {/* Registration status */}
             <div>
               <Label className="text-sm font-medium text-slate-700">Registration Status</Label>
@@ -601,7 +601,7 @@ function ParticipantsTab({ eventId }: { eventId: string }) {
             </div>
           </div>
 
-          <DialogFooter className="gap-2">
+          <DialogFooter className="gap-2 shrink-0 pt-2 border-t border-slate-100">
             <Button variant="outline" onClick={() => setEditTarget(null)}>Cancel</Button>
             <Button
               className="bg-amber-500 hover:bg-amber-600 text-white"
