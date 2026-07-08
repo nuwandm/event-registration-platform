@@ -6,6 +6,7 @@ import attendanceRoutes from './attendanceRoutes';
 import dashboardRoutes from './dashboardRoutes';
 import reportRoutes from './reportRoutes';
 import userRoutes from './userRoutes';
+import ogRoutes from './ogRoutes';
 
 const router = Router();
 
@@ -16,5 +17,6 @@ router.use('/', attendanceRoutes);
 router.use('/dashboard', dashboardRoutes);
 router.use('/reports', reportRoutes);
 router.use('/users', userRoutes);
+router.use('/og', ogRoutes);
 
 export default router;

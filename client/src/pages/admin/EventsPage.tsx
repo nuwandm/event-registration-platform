@@ -28,12 +28,19 @@ import {
 // ── Share Dialog ──────────────────────────────────────────────────────────────
 function ShareDialog({ event, onClose }: { event: Event; onClose: () => void }) {
   const [copied, setCopied] = useState(false);
-  const registrationUrl = `${window.location.origin}/events/${event.slug}`;
+  const [copiedDirect, setCopiedDirect] = useState(false);
 
-  const copy = async () => {
-    await navigator.clipboard.writeText(registrationUrl);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  // OG link — goes through backend for rich social media preview
+  const apiBase = (import.meta.env.VITE_API_URL as string ?? '/api').replace(/\/api$/, '');
+  const socialUrl = `${apiBase}/api/og/events/${event.slug}`;
+
+  // Direct link — goes straight to the Vercel SPA
+  const directUrl = `${window.location.origin}/events/${event.slug}`;
+
+  const copy = async (url: string, setStat: (v: boolean) => void) => {
+    await navigator.clipboard.writeText(url);
+    setStat(true);
+    setTimeout(() => setStat(false), 2000);
   };
 
   return (
@@ -54,28 +61,55 @@ function ShareDialog({ event, onClose }: { event: Event; onClose: () => void }) 
           </button>
         </div>
 
-        <div className="p-6 space-y-4">
-          <p className="text-sm text-slate-500">
-            Share this link with participants so they can view the event details and register.
-          </p>
+        <div className="p-6 space-y-5">
 
-          {/* URL box */}
-          <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3">
-            <p className="flex-1 text-sm text-slate-700 truncate font-mono">{registrationUrl}</p>
-            <button
-              onClick={copy}
-              className="shrink-0 flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 transition-colors"
-            >
-              {copied
-                ? <><Check className="w-3.5 h-3.5 text-emerald-500" /><span className="text-emerald-600">Copied!</span></>
-                : <><Copy className="w-3.5 h-3.5 text-slate-500" /><span className="text-slate-600">Copy</span></>
-              }
-            </button>
+          {/* Social media link — shows banner preview on WhatsApp/Facebook etc */}
+          <div>
+            <div className="flex items-center gap-1.5 mb-2">
+              <span className="text-xs font-semibold text-slate-700">Share on Social Media</span>
+              <span className="text-xs bg-emerald-100 text-emerald-700 font-medium px-2 py-0.5 rounded-full">
+                Shows banner preview
+              </span>
+            </div>
+            <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3">
+              <p className="flex-1 text-xs text-slate-600 truncate font-mono">{socialUrl}</p>
+              <button
+                onClick={() => copy(socialUrl, setCopied)}
+                className="shrink-0 flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 transition-colors"
+              >
+                {copied
+                  ? <><Check className="w-3.5 h-3.5 text-emerald-500" /><span className="text-emerald-600">Copied!</span></>
+                  : <><Copy className="w-3.5 h-3.5 text-slate-500" /><span className="text-slate-600">Copy</span></>
+                }
+              </button>
+            </div>
+            <p className="text-xs text-slate-400 mt-1.5">
+              Use this link for WhatsApp, Facebook, Telegram — shows event banner + name as a preview card.
+            </p>
+          </div>
+
+          {/* Direct registration link */}
+          <div>
+            <div className="flex items-center gap-1.5 mb-2">
+              <span className="text-xs font-semibold text-slate-700">Direct Registration Link</span>
+            </div>
+            <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3">
+              <p className="flex-1 text-xs text-slate-600 truncate font-mono">{directUrl}</p>
+              <button
+                onClick={() => copy(directUrl, setCopiedDirect)}
+                className="shrink-0 flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 transition-colors"
+              >
+                {copiedDirect
+                  ? <><Check className="w-3.5 h-3.5 text-emerald-500" /><span className="text-emerald-600">Copied!</span></>
+                  : <><Copy className="w-3.5 h-3.5 text-slate-500" /><span className="text-slate-600">Copy</span></>
+                }
+              </button>
+            </div>
           </div>
 
           {/* Open in browser */}
           <a
-            href={registrationUrl}
+            href={directUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
@@ -84,8 +118,8 @@ function ShareDialog({ event, onClose }: { event: Event; onClose: () => void }) 
             Open in browser
           </a>
 
-          <Button className="w-full" onClick={copy}>
-            {copied ? <><Check className="w-4 h-4 mr-2" />Link Copied!</> : <><Copy className="w-4 h-4 mr-2" />Copy Link</>}
+          <Button className="w-full" onClick={() => copy(socialUrl, setCopied)}>
+            {copied ? <><Check className="w-4 h-4 mr-2" />Link Copied!</> : <><Copy className="w-4 h-4 mr-2" />Copy Social Link</>}
           </Button>
         </div>
       </div>
