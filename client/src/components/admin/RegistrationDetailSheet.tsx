@@ -260,6 +260,35 @@ export function RegistrationDetailSheet({ registrationId, onClose }: Registratio
                   </div>
                 )}
 
+                {/* Custom question answers */}
+                {registration.answers && registration.answers.length > 0 && (() => {
+                  const eventObj = registration.eventId && typeof registration.eventId === 'object'
+                    ? (registration.eventId as { questions?: Array<{ _id: string; label: string }> })
+                    : null;
+                  const questionMap: Record<string, string> = {};
+                  eventObj?.questions?.forEach((q) => { questionMap[q._id] = q.label; });
+
+                  return (
+                    <div>
+                      <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">Additional Information</p>
+                      <div className="bg-white rounded-xl border border-slate-100 px-4 divide-y divide-slate-50">
+                        {registration.answers.map((ans, i) => {
+                          const label = questionMap[ans.questionId] ?? `Question ${i + 1}`;
+                          const displayVal = Array.isArray(ans.answer)
+                            ? ans.answer.join(', ')
+                            : String(ans.answer ?? '');
+                          return (
+                            <div key={ans.questionId} className="py-2.5">
+                              <p className="text-xs text-slate-400 mb-0.5">{label}</p>
+                              <p className="text-sm text-slate-700 font-medium wrap-break-word">{displayVal || '—'}</p>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })()}
+
                 {/* Admin remarks */}
                 {registration.adminRemarks && (
                   <div>

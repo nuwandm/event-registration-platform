@@ -113,6 +113,9 @@ export const eventController = {
       if (typeof req.body.bannerPosition === 'string') {
         try { req.body.bannerPosition = JSON.parse(req.body.bannerPosition); } catch { delete req.body.bannerPosition; }
       }
+      if (typeof req.body.questions === 'string') {
+        try { req.body.questions = JSON.parse(req.body.questions); } catch { req.body.questions = []; }
+      }
 
       const event = await eventService.createEvent(req.body, tenantId, String(req.admin._id), req.file);
       res.status(201).json({ success: true, message: 'Event created', data: { event } });
@@ -129,6 +132,9 @@ export const eventController = {
       }
       if (typeof req.body.bannerPosition === 'string') {
         try { req.body.bannerPosition = JSON.parse(req.body.bannerPosition); } catch { delete req.body.bannerPosition; }
+      }
+      if (typeof req.body.questions === 'string') {
+        try { req.body.questions = JSON.parse(req.body.questions); } catch { req.body.questions = []; }
       }
       const event = await eventService.updateEvent(req.params.id, tenantId, req.body, req.file);
       res.json({ success: true, message: 'Event updated', data: { event } });

@@ -44,10 +44,23 @@ export const registrationController = {
       }
 
       const tenantId = requireTenant(req);
+
+      // Parse answers array from FormData (sent as JSON string)
+      let answers: Array<{ questionId: string; answer: string | string[] }> | undefined;
+      if (req.body.answers) {
+        try {
+          answers = typeof req.body.answers === 'string'
+            ? JSON.parse(req.body.answers)
+            : req.body.answers;
+        } catch {
+          answers = undefined;
+        }
+      }
+
       const registration = await registrationService.submitRegistration(
         req.params.eventId,
         tenantId,
-        req.body,
+        { ...req.body, answers },
         req.file
       );
 

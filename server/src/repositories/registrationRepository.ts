@@ -26,7 +26,7 @@ export const registrationRepository = {
   },
 
   async findById(id: string): Promise<IRegistration | null> {
-    return Registration.findById(id).populate('eventId', 'name slug venue eventDate registrationFee bankDetails admissionOpen');
+    return Registration.findById(id).populate('eventId', 'name slug venue eventDate registrationFee bankDetails admissionOpen questions');
   },
 
   async findByIdLean(id: string): Promise<LeanRegistration | null> {

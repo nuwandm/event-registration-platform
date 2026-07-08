@@ -10,6 +10,7 @@ export interface SubmitRegistrationPayload {
   organization?: string;
   designation?: string;
   receipt: File;
+  answers?: Array<{ questionId: string; answer: string | string[] }>;
 }
 
 export interface RegistrationFilters {
@@ -38,6 +39,9 @@ export const registrationsApi = (orgSlug: string) => ({
     if (payload.organization) form.append('organization', payload.organization);
     if (payload.designation) form.append('designation', payload.designation);
     form.append('receipt', payload.receipt);
+    if (payload.answers && payload.answers.length > 0) {
+      form.append('answers', JSON.stringify(payload.answers));
+    }
     return api.post<ApiResponse<SubmitRegistrationResult>>(
       `/${orgSlug}/registrations/${eventId}`,
       form,

@@ -16,6 +16,7 @@ export interface SubmitRegistrationDTO {
   address: string;
   organization?: string;
   designation?: string;
+  answers?: Array<{ questionId: string; answer: string | string[] }>;
 }
 
 type LeanOrDoc = IRegistration & { _id: unknown };
@@ -81,6 +82,7 @@ export const registrationService = {
       receiptPublicId,
       status: 'pending',
       attendanceStatus: 'not_attended',
+      answers: dto.answers ?? [],
     });
 
     // 7. Increment event registration counter

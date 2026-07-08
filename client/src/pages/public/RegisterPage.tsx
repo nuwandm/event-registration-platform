@@ -6,8 +6,10 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
   CalendarDays, MapPin, CreditCard, Building2, Upload, X, FileText,
   User, Mail, Phone, MapPin as MapPinIcon, Briefcase, ArrowLeft, CheckCircle2,
+  ListChecks,
 } from 'lucide-react';
 import { format } from 'date-fns';
+import { toast } from 'sonner';
 
 import { registrationSchema, type RegistrationFormValues } from '@/schemas/registration';
 import { useTenant } from '@/context/TenantContext';
@@ -17,7 +19,11 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from '@/components/ui/select';
 import { cn } from '@/lib/utils';
+import type { Question } from '@/types';
 
 // ── Receipt upload zone ───────────────────────────────────────────────────────
 interface ReceiptUploadProps {
@@ -110,6 +116,104 @@ function Field({ label, error, children, required }: { label: string; error?: st
   );
 }
 
+// ── Question field renderer ───────────────────────────────────────────────────
+interface QuestionFieldProps {
+  question: Question;
+  value: string | string[] | undefined;
+  error?: string;
+  onChange: (val: string | string[]) => void;
+  brand: string;
+}
+
+function QuestionField({ question, value, error, onChange, brand }: QuestionFieldProps) {
+  const strVal = typeof value === 'string' ? value : '';
+  const arrVal = Array.isArray(value) ? value : [];
+
+  const toggleCheckbox = (option: string) => {
+    const next = arrVal.includes(option)
+      ? arrVal.filter((v) => v !== option)
+      : [...arrVal, option];
+    onChange(next);
+  };
+
+  return (
+    <div className="space-y-1.5">
+      <Label className="text-sm font-medium text-slate-700">
+        {question.label}
+        {question.required && <span className="text-red-500 ml-0.5">*</span>}
+      </Label>
+
+      {question.type === 'text' && (
+        <Input
+          value={strVal}
+          onChange={(e) => onChange(e.target.value)}
+          className={error ? 'border-red-400 focus-visible:ring-red-400' : ''}
+        />
+      )}
+
+      {question.type === 'textarea' && (
+        <Textarea
+          value={strVal}
+          onChange={(e) => onChange(e.target.value)}
+          className={cn('resize-none min-h-20', error ? 'border-red-400 focus-visible:ring-red-400' : '')}
+        />
+      )}
+
+      {question.type === 'radio' && (
+        <div className="space-y-2">
+          {question.options.map((opt) => (
+            <label key={opt} className="flex items-center gap-2.5 cursor-pointer">
+              <input
+                type="radio"
+                name={`question-${question._id}`}
+                value={opt}
+                checked={strVal === opt}
+                onChange={() => onChange(opt)}
+                className="w-4 h-4"
+                style={{ accentColor: brand }}
+              />
+              <span className="text-sm text-slate-700">{opt}</span>
+            </label>
+          ))}
+        </div>
+      )}
+
+      {question.type === 'checkbox' && (
+        <div className="space-y-2">
+          {question.options.map((opt) => (
+            <label key={opt} className="flex items-center gap-2.5 cursor-pointer">
+              <input
+                type="checkbox"
+                value={opt}
+                checked={arrVal.includes(opt)}
+                onChange={() => toggleCheckbox(opt)}
+                className="w-4 h-4 rounded"
+                style={{ accentColor: brand }}
+              />
+              <span className="text-sm text-slate-700">{opt}</span>
+            </label>
+          ))}
+        </div>
+      )}
+
+      {question.type === 'dropdown' && (
+        <Select value={strVal} onValueChange={(v) => onChange(v)}>
+          <SelectTrigger className={error ? 'border-red-400 focus-visible:ring-red-400' : ''}>
+            <SelectValue placeholder="Select an option" />
+          </SelectTrigger>
+          <SelectContent>
+            {question.options.map((opt) => (
+              <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
+
+      {error && <p className="text-xs text-red-500">{error}</p>}
+    </div>
+  );
+}
+
 // ── Main page ─────────────────────────────────────────────────────────────────
 export function RegisterPage() {
   const { api, orgSlug, tenant } = useTenant();
@@ -134,10 +238,32 @@ export function RegisterPage() {
   });
 
   const [serverError, setServerError] = useState<string | null>(null);
+  const [answers, setAnswers] = useState<Record<string, string | string[]>>({});
+  const [answerErrors, setAnswerErrors] = useState<Record<string, string>>({});
+
+  const validateAnswers = (): boolean => {
+    if (!event?.questions?.length) return true;
+    const errs: Record<string, string> = {};
+    for (const q of event.questions) {
+      if (!q.required) continue;
+      const val = answers[q._id];
+      const empty =
+        val === undefined ||
+        val === '' ||
+        (Array.isArray(val) && val.length === 0);
+      if (empty) errs[q._id] = 'This field is required';
+    }
+    setAnswerErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
 
   const { mutate, isPending } = useMutation({
-    mutationFn: (data: RegistrationFormValues) =>
-      api.registrations.submit(String(event!._id), {
+    mutationFn: (data: RegistrationFormValues) => {
+      const answersPayload = Object.entries(answers).map(([questionId, answer]) => ({
+        questionId,
+        answer,
+      }));
+      return api.registrations.submit(String(event!._id), {
         fullName: data.fullName,
         nic: data.nic,
         email: data.email,
@@ -146,7 +272,9 @@ export function RegisterPage() {
         organization: data.organization || undefined,
         designation: data.designation || undefined,
         receipt: data.receipt,
-      }),
+        answers: answersPayload,
+      });
+    },
     onSuccess: (res) => {
       const { registrationId } = res.data.data!;
       navigate(`/${orgSlug}/registration/success?id=${registrationId}`);
@@ -259,7 +387,17 @@ export function RegisterPage() {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit((d) => { setServerError(null); mutate(d); })} noValidate>
+      <form
+        onSubmit={handleSubmit((d) => {
+          if (!validateAnswers()) {
+            toast.error('Please answer all required questions');
+            return;
+          }
+          setServerError(null);
+          mutate(d);
+        })}
+        noValidate
+      >
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
 
           {/* Section: Personal Information */}
@@ -363,7 +501,7 @@ export function RegisterPage() {
           )}
 
           {/* Section: Receipt Upload */}
-          <div className="px-6 py-5">
+          <div className={cn('px-6 py-5', event.questions?.length > 0 ? 'border-b border-slate-100' : '')}>
             <h3 className="font-semibold text-slate-800 mb-1 flex items-center gap-2">
               <Upload className="w-4 h-4" style={{ color: brand }} />
               Upload Payment Receipt
@@ -386,6 +524,40 @@ export function RegisterPage() {
               )}
             />
           </div>
+
+          {/* Section: Additional Information (custom questions) */}
+          {event.questions && event.questions.length > 0 && (
+            <div className="px-6 py-5">
+              <h3 className="font-semibold text-slate-800 mb-1 flex items-center gap-2">
+                <ListChecks className="w-4 h-4" style={{ color: brand }} />
+                Additional Information
+              </h3>
+              <p className="text-xs text-slate-400 mb-4">
+                Please answer the following questions to complete your registration.
+              </p>
+              <div className="space-y-5">
+                {event.questions.map((question: Question) => (
+                  <QuestionField
+                    key={question._id}
+                    question={question}
+                    value={answers[question._id]}
+                    error={answerErrors[question._id]}
+                    onChange={(val) => {
+                      setAnswers((prev) => ({ ...prev, [question._id]: val }));
+                      if (answerErrors[question._id]) {
+                        setAnswerErrors((prev) => {
+                          const next = { ...prev };
+                          delete next[question._id];
+                          return next;
+                        });
+                      }
+                    }}
+                    brand={brand}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Server error */}

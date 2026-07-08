@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { useForm, Controller, type Resolver } from 'react-hook-form';
+import { useForm, Controller, useFieldArray, type Resolver, type Control, type UseFormRegister, type UseFormWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { ImagePlus, X, CalendarDays, CreditCard, Move } from 'lucide-react';
+import { ImagePlus, X, CalendarDays, CreditCard, Move, ListPlus, Trash2, Plus } from 'lucide-react';
 
-import { eventFormSchema, type EventFormValues } from '@/schemas/event';
+import { eventFormSchema, type EventFormValues, type QuestionFormValue } from '@/schemas/event';
 import { useTenant } from '@/context/TenantContext';
 import type { Event } from '@/types';
 import {
@@ -45,6 +45,147 @@ function SectionHeading({ icon: Icon, label }: { icon: React.ElementType; label:
   );
 }
 
+// ── Question type labels ──────────────────────────────────────────────────────
+const QUESTION_TYPE_LABELS: Record<QuestionFormValue['type'], string> = {
+  text: 'Short Text',
+  textarea: 'Long Text',
+  radio: 'Multiple Choice',
+  checkbox: 'Checkboxes',
+  dropdown: 'Dropdown',
+};
+
+const OPTION_TYPES: QuestionFormValue['type'][] = ['radio', 'checkbox', 'dropdown'];
+
+// ── QuestionBuilderItem ───────────────────────────────────────────────────────
+interface QuestionBuilderItemProps {
+  index: number;
+  control: Control<EventFormValues>;
+  register: UseFormRegister<EventFormValues>;
+  watch: UseFormWatch<EventFormValues>;
+  onRemove: () => void;
+}
+
+function QuestionBuilderItem({ index, control, register, watch, onRemove }: QuestionBuilderItemProps) {
+  const questionType = watch(`questions.${index}.type`);
+  const needsOptions = OPTION_TYPES.includes(questionType);
+
+  return (
+    <div className="border border-slate-200 rounded-xl p-4 space-y-3 bg-slate-50/50">
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex-1 space-y-3">
+          {/* Label */}
+          <div>
+            <Label className="text-xs text-slate-500 mb-1 block">Question Label *</Label>
+            <Input
+              {...register(`questions.${index}.label`)}
+              placeholder="e.g. What is your dietary preference?"
+              className="bg-white"
+            />
+          </div>
+
+          {/* Type */}
+          <div>
+            <Label className="text-xs text-slate-500 mb-1 block">Answer Type</Label>
+            <Controller
+              control={control}
+              name={`questions.${index}.type`}
+              render={({ field }) => (
+                <Select value={field.value} onValueChange={(v) => field.onChange(v as QuestionFormValue['type'])}>
+                  <SelectTrigger className="bg-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(Object.keys(QUESTION_TYPE_LABELS) as QuestionFormValue['type'][]).map((t) => (
+                      <SelectItem key={t} value={t}>{QUESTION_TYPE_LABELS[t]}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+          </div>
+
+          {/* Options (for radio/checkbox/dropdown) */}
+          {needsOptions && (
+            <Controller
+              control={control}
+              name={`questions.${index}.options`}
+              render={({ field }) => {
+                const opts: string[] = field.value ?? [];
+                const setOpts = (next: string[]) => field.onChange(next);
+                return (
+                  <div>
+                    <Label className="text-xs text-slate-500 mb-1 block">Options</Label>
+                    <div className="space-y-2">
+                      {opts.map((opt, optIdx) => (
+                        <div key={optIdx} className="flex items-center gap-2">
+                          <Input
+                            value={opt}
+                            onChange={(e) => {
+                              const next = [...opts];
+                              next[optIdx] = e.target.value;
+                              setOpts(next);
+                            }}
+                            placeholder={`Option ${optIdx + 1}`}
+                            className="bg-white flex-1"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setOpts(opts.filter((_, i) => i !== optIdx))}
+                            className="p-1.5 text-slate-400 hover:text-red-500 transition-colors rounded"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() => setOpts([...opts, ''])}
+                        className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1 mt-1"
+                      >
+                        <Plus className="w-3 h-3" /> Add option
+                      </button>
+                      {opts.filter(Boolean).length === 0 && (
+                        <p className="text-xs text-amber-500">Add at least one option</p>
+                      )}
+                    </div>
+                  </div>
+                );
+              }}
+            />
+          )}
+
+          {/* Required toggle */}
+          <label className="flex items-center gap-2 cursor-pointer select-none">
+            <Controller
+              control={control}
+              name={`questions.${index}.required`}
+              render={({ field }) => (
+                <input
+                  type="checkbox"
+                  checked={field.value}
+                  onChange={(e) => field.onChange(e.target.checked)}
+                  className="w-4 h-4 accent-blue-600 rounded"
+                />
+              )}
+            />
+            <span className="text-xs text-slate-600 font-medium">Required</span>
+          </label>
+        </div>
+
+        {/* Delete question */}
+        <button
+          type="button"
+          onClick={onRemove}
+          className="p-1.5 text-slate-400 hover:text-red-500 transition-colors rounded mt-0.5 shrink-0"
+          title="Remove question"
+        >
+          <Trash2 className="w-4 h-4" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function EventFormDialog({ open, onClose, event }: EventFormDialogProps) {
   const { api } = useTenant();
   const queryClient = useQueryClient();
@@ -70,7 +211,13 @@ export function EventFormDialog({ open, onClose, event }: EventFormDialogProps) 
       status: 'draft',
       registrationFee: 0,
       bankDetails: { bankName: '', accountName: '', accountNumber: '', branch: '' },
+      questions: [],
     },
+  });
+
+  const { fields: questionFields, append: appendQuestion, remove: removeQuestion } = useFieldArray({
+    control,
+    name: 'questions',
   });
 
   useEffect(() => {
@@ -86,6 +233,13 @@ export function EventFormDialog({ open, onClose, event }: EventFormDialogProps) 
         maxParticipants: event.maxParticipants ?? ('' as unknown as number),
         status: event.status,
         bankDetails: event.bankDetails,
+        questions: (event.questions ?? []).map((q) => ({
+          _id: q._id,
+          label: q.label,
+          type: q.type,
+          options: q.options ?? [],
+          required: q.required ?? false,
+        })),
       });
       setBannerPreview(event.bannerImage ?? null);
       setBannerPos(event.bannerPosition ?? { x: 50, y: 50 });
@@ -94,6 +248,7 @@ export function EventFormDialog({ open, onClose, event }: EventFormDialogProps) 
         status: 'draft',
         registrationFee: 0,
         bankDetails: { bankName: '', accountName: '', accountNumber: '', branch: '' },
+        questions: [],
       });
       setBannerPreview(null);
       setBannerPos({ x: 50, y: 50 });
@@ -103,7 +258,12 @@ export function EventFormDialog({ open, onClose, event }: EventFormDialogProps) 
 
   const { mutate, isPending } = useMutation({
     mutationFn: (data: EventFormValues) => {
-      const payload = { ...data, maxParticipants: data.maxParticipants || undefined, bannerPosition: bannerPos };
+      const payload = {
+        ...data,
+        maxParticipants: data.maxParticipants || undefined,
+        bannerPosition: bannerPos,
+        questions: data.questions ?? [],
+      };
       if (isEditing) return api.events.update(event!._id, payload as Record<string, unknown>, bannerFile ?? undefined);
       return api.events.create(payload as Record<string, unknown>, bannerFile ?? undefined);
     },
@@ -377,6 +537,46 @@ export function EventFormDialog({ open, onClose, event }: EventFormDialogProps) 
                 {errors.bankDetails?.branch && <p className="text-xs text-red-500 mt-0.5">{errors.bankDetails.branch.message}</p>}
               </div>
             </div>
+          </div>
+
+          <Separator />
+
+          {/* Custom Questions */}
+          <div>
+            <SectionHeading icon={ListPlus} label="Custom Questions" />
+            <p className="text-xs text-slate-400 mb-3">
+              Add custom questions that registrants must answer when signing up for this event.
+            </p>
+
+            <div className="space-y-4">
+              {questionFields.map((field, index) => (
+                <QuestionBuilderItem
+                  key={field.id}
+                  index={index}
+                  control={control}
+                  register={register}
+                  watch={watch}
+                  onRemove={() => removeQuestion(index)}
+                />
+              ))}
+            </div>
+
+            <button
+              type="button"
+              onClick={() =>
+                appendQuestion({
+                  _id: Date.now().toString(),
+                  label: '',
+                  type: 'text',
+                  options: [],
+                  required: false,
+                } as QuestionFormValue)
+              }
+              className="mt-3 w-full flex items-center justify-center gap-2 border-2 border-dashed border-slate-200 rounded-xl py-3 text-sm text-slate-500 hover:border-blue-400 hover:text-blue-600 transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              Add Question
+            </button>
           </div>
 
           {/* Bottom spacing */}

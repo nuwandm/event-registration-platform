@@ -8,6 +8,16 @@ export interface IBankDetails {
   branch: string;
 }
 
+export type QuestionType = 'text' | 'textarea' | 'radio' | 'checkbox' | 'dropdown';
+
+export interface IQuestion {
+  _id: string;
+  label: string;
+  type: QuestionType;
+  options: string[];
+  required: boolean;
+}
+
 export type EventStatus = 'draft' | 'published' | 'closed';
 
 export interface IEvent extends Document {
@@ -28,6 +38,7 @@ export interface IEvent extends Document {
   admissionOpen: boolean;
   status: EventStatus;
   registrationCount: number;
+  questions: IQuestion[];
   createdBy: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
@@ -41,6 +52,16 @@ const bankDetailsSchema = new Schema<IBankDetails>(
     branch: { type: String, required: true, trim: true },
   },
   { _id: false }
+);
+
+const questionSchema = new Schema<IQuestion>(
+  {
+    label: { type: String, required: true, trim: true, maxlength: 500 },
+    type: { type: String, enum: ['text', 'textarea', 'radio', 'checkbox', 'dropdown'], required: true },
+    options: [{ type: String, trim: true }],
+    required: { type: Boolean, default: false },
+  },
+  { _id: true }
 );
 
 const eventSchema = new Schema<IEvent>(
@@ -112,6 +133,7 @@ const eventSchema = new Schema<IEvent>(
       default: 'draft',
     },
     registrationCount: { type: Number, default: 0 },
+    questions: { type: [questionSchema], default: [] },
     createdBy: {
       type: Schema.Types.ObjectId,
       ref: 'Admin',

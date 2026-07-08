@@ -7,6 +7,14 @@ const bankDetailsSchema = z.object({
   branch: z.string().min(1, 'Branch is required'),
 });
 
+export const questionSchema = z.object({
+  _id: z.string().optional(),
+  label: z.string().min(1, 'Question label is required'),
+  type: z.enum(['text', 'textarea', 'radio', 'checkbox', 'dropdown']),
+  options: z.array(z.string()).default([]),
+  required: z.boolean().default(false),
+});
+
 export const eventFormSchema = z.object({
   name: z.string().min(1, 'Event name is required').max(200),
   description: z.string().min(1, 'Description is required').max(5000),
@@ -22,7 +30,16 @@ export const eventFormSchema = z.object({
   status: z.enum(['draft', 'published', 'closed']),
   bankDetails: bankDetailsSchema,
   bannerPosition: z.object({ x: z.number(), y: z.number() }).optional(),
+  questions: z.array(questionSchema).default([]),
 });
+
+export interface QuestionFormValue {
+  _id?: string;
+  label: string;
+  type: 'text' | 'textarea' | 'radio' | 'checkbox' | 'dropdown';
+  options: string[];
+  required: boolean;
+}
 
 export interface EventFormValues {
   name: string;
@@ -41,4 +58,5 @@ export interface EventFormValues {
     branch: string;
   };
   bannerPosition?: { x: number; y: number };
+  questions: QuestionFormValue[];
 }

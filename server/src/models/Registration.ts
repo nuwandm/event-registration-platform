@@ -3,6 +3,11 @@ import mongoose, { Document, Schema } from 'mongoose';
 export type RegistrationStatus = 'pending' | 'approved' | 'rejected';
 export type AttendanceStatus = 'not_attended' | 'attended';
 
+export interface IAnswer {
+  questionId: string;
+  answer: string | string[];
+}
+
 export interface IRegistration extends Document {
   tenantId: mongoose.Types.ObjectId;
   eventId: mongoose.Types.ObjectId;
@@ -22,6 +27,7 @@ export interface IRegistration extends Document {
   attendanceStatus: AttendanceStatus;
   attendanceTime?: Date;
   adminRemarks?: string;
+  answers?: IAnswer[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -105,6 +111,18 @@ const registrationSchema = new Schema<IRegistration>(
     },
     attendanceTime: { type: Date },
     adminRemarks: { type: String, maxlength: 1000 },
+    answers: {
+      type: [
+        new Schema<IAnswer>(
+          {
+            questionId: { type: String, required: true },
+            answer: { type: Schema.Types.Mixed },
+          },
+          { _id: false }
+        ),
+      ],
+      default: [],
+    },
   },
   { timestamps: true }
 );

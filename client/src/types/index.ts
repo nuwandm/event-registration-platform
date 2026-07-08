@@ -61,6 +61,19 @@ export interface BankDetails {
   branch: string;
 }
 
+export interface Question {
+  _id: string;
+  label: string;
+  type: 'text' | 'textarea' | 'radio' | 'checkbox' | 'dropdown';
+  options: string[];
+  required: boolean;
+}
+
+export interface Answer {
+  questionId: string;
+  answer: string | string[];
+}
+
 export interface Event {
   _id: string;
   tenantId: string;
@@ -79,6 +92,7 @@ export interface Event {
   admissionOpen: boolean;
   status: EventStatus;
   registrationCount: number;
+  questions: Question[];
   createdAt: string;
   updatedAt: string;
 }
@@ -106,6 +120,7 @@ export interface Registration {
   attendanceStatus: AttendanceStatus;
   attendanceTime?: string;
   adminRemarks?: string;
+  answers?: Answer[];
   createdAt: string;
   updatedAt: string;
 }
