@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -19,6 +19,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
+import { DateTimePicker } from '@/components/ui/date-time-picker';
 
 interface EventFormDialogProps {
   open: boolean;
@@ -44,6 +45,7 @@ export function EventFormDialog({ open, onClose, event }: EventFormDialogProps) 
     reset,
     setValue,
     watch,
+    control,
     formState: { errors },
   } = useForm<EventFormValues>({
     resolver: zodResolver(eventFormSchema),
@@ -184,8 +186,16 @@ export function EventFormDialog({ open, onClose, event }: EventFormDialogProps) 
           {/* Dates */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <Label htmlFor="eventDate">Event Date *</Label>
-              <Input id="eventDate" type="datetime-local" {...register('eventDate')} className="mt-1" />
+              <Label>Event Date *</Label>
+              <div className="mt-1">
+                <Controller
+                  name="eventDate"
+                  control={control}
+                  render={({ field }) => (
+                    <DateTimePicker value={field.value} onChange={field.onChange} placeholder="Pick event date & time" />
+                  )}
+                />
+              </div>
               {errors.eventDate && <p className="text-xs text-red-500 mt-0.5">{errors.eventDate.message}</p>}
             </div>
             <div>
@@ -194,13 +204,29 @@ export function EventFormDialog({ open, onClose, event }: EventFormDialogProps) 
               {errors.registrationFee && <p className="text-xs text-red-500 mt-0.5">{errors.registrationFee.message}</p>}
             </div>
             <div>
-              <Label htmlFor="registrationOpenDate">Registration Opens *</Label>
-              <Input id="registrationOpenDate" type="datetime-local" {...register('registrationOpenDate')} className="mt-1" />
+              <Label>Registration Opens *</Label>
+              <div className="mt-1">
+                <Controller
+                  name="registrationOpenDate"
+                  control={control}
+                  render={({ field }) => (
+                    <DateTimePicker value={field.value} onChange={field.onChange} placeholder="Pick open date & time" />
+                  )}
+                />
+              </div>
               {errors.registrationOpenDate && <p className="text-xs text-red-500 mt-0.5">{errors.registrationOpenDate.message}</p>}
             </div>
             <div>
-              <Label htmlFor="registrationCloseDate">Registration Closes *</Label>
-              <Input id="registrationCloseDate" type="datetime-local" {...register('registrationCloseDate')} className="mt-1" />
+              <Label>Registration Closes *</Label>
+              <div className="mt-1">
+                <Controller
+                  name="registrationCloseDate"
+                  control={control}
+                  render={({ field }) => (
+                    <DateTimePicker value={field.value} onChange={field.onChange} placeholder="Pick close date & time" />
+                  )}
+                />
+              </div>
               {errors.registrationCloseDate && <p className="text-xs text-red-500 mt-0.5">{errors.registrationCloseDate.message}</p>}
             </div>
             <div>
