@@ -19,6 +19,7 @@ import { EventsPage } from '@/pages/admin/EventsPage';
 import { RegistrationsPage } from '@/pages/admin/RegistrationsPage';
 import { AttendanceScannerPage } from '@/pages/admin/AttendanceScannerPage';
 import { ReportsPage } from '@/pages/admin/ReportsPage';
+import { UsersPage } from '@/pages/admin/UsersPage';
 
 const router = createBrowserRouter([
   // Public routes
@@ -48,6 +49,7 @@ const router = createBrowserRouter([
           { path: '/admin/registrations', element: <RegistrationsPage /> },
           { path: '/admin/attendance', element: <AttendanceScannerPage /> },
           { path: '/admin/reports', element: <ReportsPage /> },
+          { path: '/admin/users', element: <UsersPage /> },
         ],
       },
     ],

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import {
   ScanLine, CheckCircle2, XCircle, AlertCircle, Camera, CameraOff,
   User, Hash, Building2, Clock, RefreshCw, CalendarDays,
@@ -7,10 +7,12 @@ import {
 import { format } from 'date-fns';
 
 import { attendanceApi, type ScanResult } from '@/api/attendanceApi';
+import { eventsApi } from '@/api/eventsApi';
 import { useQRScanner } from '@/hooks/useQRScanner';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { useAuthStore } from '@/store/authStore';
 
 const SCANNER_ELEMENT_ID = 'qr-scanner-viewport';
 
@@ -135,13 +137,40 @@ interface RecentScan {
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 export function AttendanceScannerPage() {
+  const { admin } = useAuthStore();
+  const isStaff = admin?.role === 'staff';
+  const [selectedEventId, setSelectedEventId] = useState<string>(
+    isStaff && admin.assignedEvents.length === 1 ? admin.assignedEvents[0] : ''
+  );
+
+  const { data: eventsData } = useQuery({
+    queryKey: ['all-events'],
+    queryFn: () => eventsApi.getAll({ limit: 100 }),
+    enabled: !isStaff,
+  });
+
+  const allEvents = eventsData?.data.data?.data ?? [];
+
+  // For staff: fetch only their assigned event names
+  const { data: staffEventsData } = useQuery({
+    queryKey: ['staff-assigned-events', admin?.assignedEvents],
+    queryFn: () => eventsApi.getAll({ limit: 100 }),
+    enabled: isStaff,
+  });
+
+  const staffEvents = (staffEventsData?.data.data?.data ?? []).filter((ev) =>
+    admin?.assignedEvents.includes(ev._id)
+  );
+
+  const availableEvents = isStaff ? staffEvents : allEvents;
+
   const [lastResult, setLastResult] = useState<ScanResult | null>(null);
   const [recentScans, setRecentScans] = useState<RecentScan[]>([]);
   const lastScannedRef = useRef<string | null>(null);
   const cooldownRef = useRef(false);
 
   const { mutate: submitScan, isPending } = useMutation({
-    mutationFn: (qrData: string) => attendanceApi.scan(qrData),
+    mutationFn: (qrData: string) => attendanceApi.scan(qrData, selectedEventId || undefined),
     onSuccess: (res) => {
       const result = res.data.data!;
       setLastResult(result);
@@ -194,12 +223,56 @@ export function AttendanceScannerPage() {
 
   const isScanning = scanner.state === 'scanning';
 
+  // Staff must select an event before scanning
+  const canScan = !isStaff || !!selectedEventId;
+
   return (
     <div className="animate-fade-in max-w-4xl mx-auto">
       <PageHeader
         title="Attendance Scanner"
         description="Scan participant QR codes to mark attendance"
       />
+
+      {/* Event selector */}
+      {(isStaff && admin.assignedEvents.length > 1) || !isStaff ? (
+        <div className="mb-5 bg-white rounded-xl border border-slate-200 px-4 py-3 flex items-center gap-3">
+          <CalendarDays className="w-4 h-4 text-slate-400 shrink-0" />
+          <select
+            className="flex-1 text-sm bg-transparent outline-none text-slate-700"
+            value={selectedEventId}
+            onChange={(e) => setSelectedEventId(e.target.value)}
+          >
+            <option value="">
+              {isStaff ? 'Select your assigned event…' : 'All events (no filter)'}
+            </option>
+            {availableEvents.map((ev) => (
+              <option key={ev._id} value={ev._id}>
+                {ev.name}
+              </option>
+            ))}
+          </select>
+          {selectedEventId && (
+            <button
+              onClick={() => { if (!isStaff) setSelectedEventId(''); }}
+              className="text-slate-400 hover:text-slate-600"
+            >
+              {!isStaff && <XCircle className="w-4 h-4" />}
+            </button>
+          )}
+        </div>
+      ) : isStaff && admin.assignedEvents.length === 1 && availableEvents.length === 1 ? (
+        <div className="mb-5 bg-blue-50 rounded-xl border border-blue-100 px-4 py-3 flex items-center gap-3">
+          <CalendarDays className="w-4 h-4 text-blue-500 shrink-0" />
+          <p className="text-sm text-blue-700 font-medium">{availableEvents[0]?.name}</p>
+        </div>
+      ) : null}
+
+      {/* Staff warning if no event selected */}
+      {isStaff && !selectedEventId && (
+        <div className="mb-5 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
+          <p className="text-sm text-amber-700 font-medium">Select an event above before scanning</p>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left: Camera panel */}
@@ -234,7 +307,7 @@ export function AttendanceScannerPage() {
                 <div className="absolute inset-0 bg-slate-900/80 flex flex-col items-center justify-center gap-4">
                   <CameraOff className="w-12 h-12 text-slate-400" />
                   <p className="text-slate-300 text-sm">Camera not started</p>
-                  <Button onClick={scanner.start} size="sm">
+                  <Button onClick={scanner.start} size="sm" disabled={!canScan}>
                     <Camera className="w-4 h-4 mr-2" /> Start Camera
                   </Button>
                 </div>
@@ -271,7 +344,7 @@ export function AttendanceScannerPage() {
                   </Button>
                 )}
                 {(scanner.state === 'stopped' || scanner.state === 'idle') && (
-                  <Button size="sm" onClick={scanner.start}>
+                  <Button size="sm" onClick={scanner.start} disabled={!canScan}>
                     <Camera className="w-3.5 h-3.5 mr-1.5" /> Start
                   </Button>
                 )}

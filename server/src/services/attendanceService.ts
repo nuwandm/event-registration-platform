@@ -31,7 +31,8 @@ export const attendanceService = {
   async scanQR(
     qrData: string,
     adminId: string,
-    ipAddress?: string
+    ipAddress?: string,
+    restrictToEventId?: string
   ): Promise<ScanResult> {
     // 1. Parse QR payload
     let payload: { id: string; token: string };
@@ -50,6 +51,11 @@ export const attendanceService = {
 
     const eventDoc = registration.eventId as unknown as IEvent;
     const eventId = String(eventDoc?._id ?? registration.eventId);
+
+    // 3a. For staff: ensure the scanned QR belongs to their selected event
+    if (restrictToEventId && eventId !== restrictToEventId) {
+      return { outcome: 'invalid', message: 'This QR code does not belong to your assigned event' };
+    }
     const regId = String(registration._id);
 
     // 3. Validate token — constant-time compare not needed here since token is a UUID

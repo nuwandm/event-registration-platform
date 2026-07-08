@@ -3,11 +3,13 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import {
   Plus, Pencil, Trash2, CalendarDays, Search, ChevronLeft, ChevronRight,
+  UserCog, X,
 } from 'lucide-react';
 import { format } from 'date-fns';
 
 import { eventsApi } from '@/api/eventsApi';
-import type { Event } from '@/types';
+import { usersApi } from '@/api/usersApi';
+import type { Event, StaffUser } from '@/types';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { EventFormDialog } from '@/components/admin/EventFormDialog';
@@ -22,6 +24,108 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
+
+// ── Manage Staff Dialog ───────────────────────────────────────────────────────
+function ManageStaffDialog({ event, onClose }: { event: Event; onClose: () => void }) {
+  const qc = useQueryClient();
+
+  const { data: allStaffData, isLoading: staffLoading } = useQuery({
+    queryKey: ['staff-users'],
+    queryFn: () => usersApi.list(),
+  });
+
+  const { data: assignedData } = useQuery({
+    queryKey: ['event-staff', event._id],
+    queryFn: () => usersApi.getEventStaff(event._id),
+  });
+
+  const allStaff: StaffUser[] = allStaffData?.data.data?.users ?? [];
+  const assignedIds = new Set((assignedData?.data.data?.staff ?? []).map((s) => s._id));
+  const [selected, setSelected] = useState<Set<string>>(assignedIds);
+
+  // Sync once assigned data loads
+  if (assignedData && selected.size === 0 && assignedIds.size > 0) {
+    setSelected(new Set(assignedIds));
+  }
+
+  const saveMutation = useMutation({
+    mutationFn: () => usersApi.setEventStaff(event._id, [...selected]),
+    onSuccess: () => {
+      toast.success('Staff updated');
+      qc.invalidateQueries({ queryKey: ['event-staff', event._id] });
+      qc.invalidateQueries({ queryKey: ['staff-users'] });
+      onClose();
+    },
+    onError: () => toast.error('Failed to update staff'),
+  });
+
+  const toggle = (id: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+          <div>
+            <h2 className="text-lg font-semibold text-slate-800">Manage Staff</h2>
+            <p className="text-xs text-slate-400 mt-0.5 truncate max-w-xs">{event.name}</p>
+          </div>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="p-6">
+          {staffLoading ? (
+            <div className="space-y-2">
+              {[1, 2, 3].map((i) => <div key={i} className="h-12 bg-slate-100 rounded-lg animate-pulse" />)}
+            </div>
+          ) : allStaff.length === 0 ? (
+            <p className="text-sm text-slate-400 text-center py-6">
+              No staff users yet. Create staff users from the User Management page first.
+            </p>
+          ) : (
+            <div className="border border-slate-200 rounded-lg divide-y max-h-64 overflow-y-auto mb-5">
+              {allStaff.map((staff) => (
+                <label
+                  key={staff._id}
+                  className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-slate-50"
+                >
+                  <input
+                    type="checkbox"
+                    className="rounded"
+                    checked={selected.has(staff._id)}
+                    onChange={() => toggle(staff._id)}
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-slate-700">{staff.name}</p>
+                    <p className="text-xs text-slate-400 truncate">{staff.email}</p>
+                  </div>
+                </label>
+              ))}
+            </div>
+          )}
+
+          <div className="flex gap-3">
+            <Button variant="outline" className="flex-1" onClick={onClose}>Cancel</Button>
+            <Button
+              className="flex-1"
+              disabled={saveMutation.isPending || allStaff.length === 0}
+              onClick={() => saveMutation.mutate()}
+            >
+              {saveMutation.isPending ? 'Saving…' : 'Save'}
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 const STATUS_BADGE: Record<string, 'success' | 'warning' | 'secondary' | 'destructive'> = {
   published: 'success',
@@ -38,6 +142,7 @@ export function EventsPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   const [deletingEvent, setDeletingEvent] = useState<Event | null>(null);
+  const [staffEvent, setStaffEvent] = useState<Event | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin-events', page, search, statusFilter],
@@ -172,6 +277,9 @@ export function EventsPage() {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1 justify-end">
+                        <Button variant="ghost" size="icon" onClick={() => setStaffEvent(event)} title="Manage Staff">
+                          <UserCog className="w-3.5 h-3.5" />
+                        </Button>
                         <Button variant="ghost" size="icon" onClick={() => openEdit(event)} title="Edit">
                           <Pencil className="w-3.5 h-3.5" />
                         </Button>
@@ -208,6 +316,9 @@ export function EventsPage() {
 
       {/* Create / Edit Dialog */}
       <EventFormDialog open={formOpen} onClose={closeForm} event={editingEvent} />
+
+      {/* Manage Staff Dialog */}
+      {staffEvent && <ManageStaffDialog event={staffEvent} onClose={() => setStaffEvent(null)} />}
 
       {/* Delete Confirm */}
       <AlertDialog open={!!deletingEvent} onOpenChange={() => setDeletingEvent(null)}>

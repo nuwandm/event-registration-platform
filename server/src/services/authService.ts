@@ -15,6 +15,7 @@ export interface AuthResult {
     name: string;
     email: string;
     role: string;
+    assignedEvents: string[];
   };
 }
 
@@ -42,6 +43,7 @@ export const authService = {
         name: admin.name,
         email: admin.email,
         role: admin.role,
+        assignedEvents: admin.assignedEvents.map(String),
       },
     };
   },

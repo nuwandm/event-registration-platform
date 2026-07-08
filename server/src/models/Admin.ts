@@ -5,7 +5,8 @@ export interface IAdmin extends Document {
   name: string;
   email: string;
   password: string;
-  role: 'admin' | 'super_admin';
+  role: 'admin' | 'super_admin' | 'staff';
+  assignedEvents: mongoose.Types.ObjectId[];
   createdAt: Date;
   updatedAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
@@ -35,14 +36,18 @@ const adminSchema = new Schema<IAdmin>(
     },
     role: {
       type: String,
-      enum: ['admin', 'super_admin'],
+      enum: ['admin', 'super_admin', 'staff'],
       default: 'admin',
     },
+    assignedEvents: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: 'Event',
+      },
+    ],
   },
   { timestamps: true }
 );
-
-adminSchema.index({ email: 1 });
 
 adminSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();

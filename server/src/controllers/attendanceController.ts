@@ -19,10 +19,23 @@ export const attendanceController = {
       }
       if (!req.admin) throw new AppError('Unauthorized', 401);
 
-      const { qrData } = req.body as { qrData: string };
+      const { qrData, eventId } = req.body as { qrData: string; eventId?: string };
       const ipAddress = req.ip ?? req.socket.remoteAddress;
 
-      const result = await attendanceService.scanQR(qrData, String(req.admin._id), ipAddress);
+      // Staff must provide their assigned eventId and must be assigned to it
+      if (req.admin.role === 'staff') {
+        if (!eventId) {
+          res.status(400).json({ success: false, message: 'eventId is required for staff users' });
+          return;
+        }
+        const assigned = req.admin.assignedEvents.map(String);
+        if (!assigned.includes(eventId)) {
+          res.status(403).json({ success: false, message: 'You are not assigned to this event' });
+          return;
+        }
+      }
+
+      const result = await attendanceService.scanQR(qrData, String(req.admin._id), ipAddress, eventId);
 
       const httpStatus = result.outcome === 'success' ? 200 : result.outcome === 'duplicate' ? 200 : 422;
       res.status(httpStatus).json({ success: true, message: result.message, data: result });

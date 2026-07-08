@@ -29,8 +29,8 @@ export interface ScanResult {
 }
 
 export const attendanceApi = {
-  scan: (qrData: string) =>
-    api.post<ApiResponse<ScanResult>>('/admin/attendance/scan', { qrData }),
+  scan: (qrData: string, eventId?: string) =>
+    api.post<ApiResponse<ScanResult>>('/admin/attendance/scan', { qrData, eventId }),
 
   getList: (eventId: string) =>
     api.get<ApiResponse<{ logs: unknown[] }>>(`/admin/attendance/${eventId}`),

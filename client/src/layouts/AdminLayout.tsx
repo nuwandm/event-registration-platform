@@ -8,18 +8,20 @@ import {
   LogOut,
   Menu,
   X,
+  UserCog,
 } from 'lucide-react';
 import { useState } from 'react';
 import { useAuthStore } from '@/store/authStore';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
-const navItems = [
-  { to: '/admin', label: 'Dashboard', icon: LayoutDashboard, exact: true },
-  { to: '/admin/events', label: 'Events', icon: CalendarDays },
-  { to: '/admin/registrations', label: 'Registrations', icon: Users },
-  { to: '/admin/attendance', label: 'Attendance Scanner', icon: ScanLine },
-  { to: '/admin/reports', label: 'Reports', icon: FileBarChart2 },
+const allNavItems = [
+  { to: '/admin', label: 'Dashboard', icon: LayoutDashboard, exact: true, roles: ['super_admin', 'admin'] },
+  { to: '/admin/events', label: 'Events', icon: CalendarDays, roles: ['super_admin', 'admin'] },
+  { to: '/admin/registrations', label: 'Registrations', icon: Users, roles: ['super_admin', 'admin'] },
+  { to: '/admin/attendance', label: 'Attendance Scanner', icon: ScanLine, roles: ['super_admin', 'admin', 'staff'] },
+  { to: '/admin/reports', label: 'Reports', icon: FileBarChart2, roles: ['super_admin', 'admin'] },
+  { to: '/admin/users', label: 'User Management', icon: UserCog, roles: ['super_admin'] },
 ];
 
 export function AdminLayout() {
@@ -27,6 +29,10 @@ export function AdminLayout() {
   const navigate = useNavigate();
   const { admin, logout } = useAuthStore();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const navItems = allNavItems.filter((item) =>
+    admin?.role ? item.roles.includes(admin.role) : false
+  );
 
   const handleLogout = () => {
     logout();
@@ -43,7 +49,9 @@ export function AdminLayout() {
           <CalendarDays className="w-6 h-6 text-blue-400" />
           EventHub
         </Link>
-        <p className="text-xs text-slate-400 mt-1">Admin Panel</p>
+        <p className="text-xs text-slate-400 mt-1">
+          {admin?.role === 'staff' ? 'Staff Panel' : 'Admin Panel'}
+        </p>
       </div>
 
       <div className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">

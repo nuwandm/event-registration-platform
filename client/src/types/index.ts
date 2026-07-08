@@ -3,7 +3,17 @@ export interface Admin {
   id: string;
   name: string;
   email: string;
-  role: 'admin' | 'super_admin';
+  role: 'admin' | 'super_admin' | 'staff';
+  assignedEvents: string[];
+}
+
+export interface StaffUser {
+  _id: string;
+  name: string;
+  email: string;
+  role: 'staff';
+  assignedEvents: { _id: string; name: string; slug: string; eventDate: string }[];
+  createdAt: string;
 }
 
 export interface LoginCredentials {

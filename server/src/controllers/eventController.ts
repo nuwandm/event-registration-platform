@@ -4,7 +4,15 @@ import { eventService } from '../services/eventService';
 import { AuthRequest, ApiResponse } from '../types';
 import { AppError } from '../middleware/errorHandler';
 
+const parseBankDetails = (req: Request, _res: Response, next: NextFunction): void => {
+  if (typeof req.body.bankDetails === 'string') {
+    try { req.body.bankDetails = JSON.parse(req.body.bankDetails); } catch { /* leave as-is */ }
+  }
+  next();
+};
+
 export const createEventValidation = [
+  parseBankDetails,
   body('name').trim().notEmpty().withMessage('Event name is required').isLength({ max: 200 }),
   body('description').trim().notEmpty().withMessage('Description is required'),
   body('venue').trim().notEmpty().withMessage('Venue is required'),
