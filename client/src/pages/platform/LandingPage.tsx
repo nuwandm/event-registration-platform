@@ -18,9 +18,9 @@ export function LandingPage() {
       <header className="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between">
         <img src="/Event Hub.png" alt="EventHub" className="h-10 w-auto object-contain brightness-0 invert" />
         <div className="flex items-center gap-3">
-          <Link to="/superadmin/login">
+          <Link to="/login">
             <Button variant="ghost" size="sm" className="text-slate-300 hover:text-white hover:bg-white/10">
-              Admin
+              Sign In
             </Button>
           </Link>
           <Link to="/signup">

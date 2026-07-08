@@ -6,6 +6,7 @@ import { authLimiter } from '../middleware/rateLimiter';
 const router = Router();
 
 router.post('/login', authLimiter, loginValidation, authController.login);
+router.post('/platform-login', authLimiter, loginValidation, authController.platformLogin);
 router.get('/me', authGuard, authController.getMe);
 
 export default router;

@@ -33,6 +33,7 @@ import { SuperAdminDashboardPage } from '@/pages/superadmin/SuperAdminDashboardP
 // Platform pages (no org scope)
 import { SignupPage } from '@/pages/platform/SignupPage';
 import { LandingPage } from '@/pages/platform/LandingPage';
+import { PlatformLoginPage } from '@/pages/platform/PlatformLoginPage';
 
 // Wrapper that injects TenantProvider from the :orgSlug route param
 import { OrgSlugWrapper } from './OrgSlugWrapper';
@@ -40,6 +41,7 @@ import { OrgSlugWrapper } from './OrgSlugWrapper';
 const router = createBrowserRouter([
   // ── Platform root ────────────────────────────────────────────────────────────
   { path: '/', element: <LandingPage /> },
+  { path: '/login', element: <PlatformLoginPage /> },
   { path: '/signup', element: <SignupPage /> },
 
   // ── Super admin ───────────────────────────────────────────────────────────────

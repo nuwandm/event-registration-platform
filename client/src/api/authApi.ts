@@ -5,6 +5,9 @@ export const authApi = {
   login: (credentials: LoginCredentials) =>
     api.post<ApiResponse<AuthResponse>>('/auth/login', credentials),
 
+  platformLogin: (credentials: { email: string; password: string }) =>
+    api.post<ApiResponse<AuthResponse & { orgSlug: string }>>('/auth/platform-login', credentials),
+
   getMe: () =>
     api.get<ApiResponse<{ admin: AuthResponse['admin'] }>>('/auth/me'),
 };

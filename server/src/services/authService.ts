@@ -29,6 +29,52 @@ const generateToken = (adminId: string): string => {
 };
 
 export const authService = {
+  // Platform login — email + password only, no orgSlug required.
+  // Returns token + orgSlug so the frontend can redirect automatically.
+  async platformLogin(dto: { email: string; password: string }): Promise<AuthResult & { orgSlug?: string }> {
+    const admin = await Admin.findOne({ email: dto.email.toLowerCase() }).select('+password');
+    if (!admin || !(await admin.comparePassword(dto.password))) {
+      throw new AppError('Invalid email or password', 401);
+    }
+    // Super admin — return token with no orgSlug, frontend redirects to /superadmin
+    if (admin.role === 'super_admin') {
+      const token = generateToken(String(admin._id));
+      return {
+        token,
+        orgSlug: undefined,
+        admin: {
+          id: String(admin._id),
+          name: admin.name,
+          email: admin.email,
+          role: admin.role,
+          assignedEvents: [],
+        },
+      };
+    }
+
+    if (!admin.tenantId) {
+      throw new AppError('Account is not linked to an organization', 403);
+    }
+    const tenant = await Tenant.findById(admin.tenantId);
+    if (!tenant) throw new AppError('Organization not found', 404);
+    if (tenant.status === 'pending') throw new AppError('Your organization is pending approval. Please wait for approval.', 403);
+    if (tenant.status === 'suspended') throw new AppError('Your organization has been suspended. Contact support.', 403);
+
+    const token = generateToken(String(admin._id));
+    return {
+      token,
+      orgSlug: tenant.slug,
+      admin: {
+        id: String(admin._id),
+        name: admin.name,
+        email: admin.email,
+        role: admin.role,
+        tenantId: String(admin.tenantId),
+        assignedEvents: admin.assignedEvents.map(String),
+      },
+    };
+  },
+
   async login(dto: LoginDTO): Promise<AuthResult> {
     const admin = await Admin.findOne({ email: dto.email.toLowerCase() }).select('+password');
 
