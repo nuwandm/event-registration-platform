@@ -144,10 +144,6 @@ interface RecentScan {
 }
 
 // ── Manual Attendance Tab ─────────────────────────────────────────────────────
-const REG_BADGE: Record<string, 'pending' | 'success' | 'destructive'> = {
-  pending: 'pending', approved: 'success', rejected: 'destructive',
-};
-
 function ManualAttendanceTab({ eventId }: { eventId: string }) {
   const { api } = useTenant();
   const qc = useQueryClient();
