@@ -6,7 +6,7 @@ import {
   ArrowLeft, CalendarDays, MapPin, CreditCard, Users, Building2,
   Pencil, Trash2, Link2, UserCog, DoorOpen, DoorClosed,
   CheckCircle2, Clock, Eye, Search, ChevronLeft, ChevronRight,
-  SquarePen,
+  SquarePen, Copy, Check,
 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -192,7 +192,7 @@ export function AdminEventDetailPage() {
       </div>
 
       {/* Tab content */}
-      {tab === 'Details' && <DetailsTab event={event} />}
+      {tab === 'Details' && <DetailsTab event={event} orgSlug={orgSlug} />}
       {tab === 'Participants' && <ParticipantsTab eventId={id!} />}
       {tab === 'Staff' && <StaffTab eventId={id!} eventName={event.name} />}
 
@@ -221,7 +221,16 @@ export function AdminEventDetailPage() {
 }
 
 // ── Details tab ───────────────────────────────────────────────────────────────
-function DetailsTab({ event }: { event: import('@/types').Event }) {
+function DetailsTab({ event, orgSlug }: { event: import('@/types').Event; orgSlug: string }) {
+  const [copied, setCopied] = useState(false);
+  const registrationUrl = `${window.location.origin}/${orgSlug}/events/${event.slug}/register`;
+
+  const copyLink = async () => {
+    await navigator.clipboard.writeText(registrationUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   return (
     <div className="space-y-4">
       {/* Info cards */}
@@ -283,10 +292,19 @@ function DetailsTab({ event }: { event: import('@/types').Event }) {
           <Link2 className="w-4 h-4 text-blue-500" />
           <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Registration Link</p>
         </div>
-        <div className="flex items-center gap-2 bg-slate-50 rounded-lg px-3 py-2 text-xs font-mono text-slate-600 truncate">
-          {`${window.location.origin}/events/${event.slug}`}
+        <div className="flex items-center gap-2 bg-slate-50 rounded-lg px-3 py-2">
+          <span className="flex-1 text-xs font-mono text-slate-600 truncate">{registrationUrl}</span>
+          <button
+            onClick={copyLink}
+            className="shrink-0 flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 transition-colors"
+          >
+            {copied
+              ? <><Check className="w-3.5 h-3.5 text-emerald-500" /><span className="text-emerald-600">Copied!</span></>
+              : <><Copy className="w-3.5 h-3.5 text-slate-400" /><span className="text-slate-600">Copy</span></>
+            }
+          </button>
         </div>
-        <a href={`${window.location.origin}/events/${event.slug}`} target="_blank" rel="noopener noreferrer"
+        <a href={registrationUrl} target="_blank" rel="noopener noreferrer"
           className="mt-2 inline-flex items-center gap-1.5 text-xs text-blue-600 hover:underline">
           Open event page ↗
         </a>
