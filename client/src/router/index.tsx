@@ -17,6 +17,7 @@ import { RegistrationStatusPage } from '@/pages/public/RegistrationStatusPage';
 import { LoginPage } from '@/pages/admin/LoginPage';
 import { DashboardPage } from '@/pages/admin/DashboardPage';
 import { EventsPage } from '@/pages/admin/EventsPage';
+import { AdminEventDetailPage } from '@/pages/admin/AdminEventDetailPage';
 import { RegistrationsPage } from '@/pages/admin/RegistrationsPage';
 import { AttendanceScannerPage } from '@/pages/admin/AttendanceScannerPage';
 import { ReportsPage } from '@/pages/admin/ReportsPage';
@@ -48,6 +49,7 @@ const router = createBrowserRouter([
         children: [
           { path: '/admin', element: <DashboardPage /> },
           { path: '/admin/events', element: <EventsPage /> },
+          { path: '/admin/events/:id', element: <AdminEventDetailPage /> },
           { path: '/admin/registrations', element: <RegistrationsPage /> },
           { path: '/admin/attendance', element: <AttendanceScannerPage /> },
           { path: '/admin/reports', element: <ReportsPage /> },

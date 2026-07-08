@@ -422,7 +422,8 @@ export function EventsPage() {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {events.map((event) => (
-                  <tr key={event._id} className="hover:bg-slate-50 transition-colors">
+                  <tr key={event._id} className="hover:bg-slate-50 transition-colors cursor-pointer"
+                    onClick={() => navigate(`/admin/events/${event._id}`)}>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         {event.bannerImage ? (
@@ -454,7 +455,7 @@ export function EventsPage() {
                       {event.registrationCount}
                       {event.maxParticipants ? ` / ${event.maxParticipants}` : ''}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center justify-end">
                         {/* Admission status pill */}
                         {event.admissionOpen && (
@@ -467,7 +468,7 @@ export function EventsPage() {
                           {
                             icon: Users,
                             label: 'View Participants',
-                            onClick: () => navigate(`/admin/registrations?eventId=${event._id}`),
+                            onClick: () => navigate(`/admin/events/${event._id}?tab=Participants`),
                           },
                           {
                             icon: Link2,
