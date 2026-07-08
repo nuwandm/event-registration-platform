@@ -14,32 +14,25 @@ export function PublicLayout() {
       {/* Header */}
       <header className="sticky top-0 z-50 bg-white border-b border-slate-200 shadow-sm">
         <div className="max-w-6xl mx-auto px-4 h-20 flex items-center justify-between">
-          <Link to={`/${orgSlug}`} className="flex items-center gap-4">
-            {tenant?.logoUrl ? (
+          <Link to={`/${orgSlug}`} className="flex items-center gap-3">
+            {tenant?.logoUrl && (
               <img
                 src={tenant.logoUrl}
                 alt={tenant.name}
-                className="h-14 w-auto object-contain"
+                className="h-12 w-auto object-contain"
               />
-            ) : (
-              <img src="/Event Hub.png" alt="EventHub" className="h-14 w-auto object-contain" />
             )}
-            {tenant?.name && (
-              <div className="hidden sm:block">
-                <p className="font-bold text-slate-800 text-lg leading-tight">{tenant.name}</p>
-                <p className="text-xs text-slate-400 leading-none">Event Registration Portal</p>
-              </div>
-            )}
+            <div className="flex flex-col justify-center">
+              {tenant?.name ? (
+                <>
+                  <p className="font-bold text-slate-800 text-base leading-tight">{tenant.name}</p>
+                  <p className="text-xs text-slate-400 leading-none">Event Registration Portal</p>
+                </>
+              ) : (
+                <img src="/Event Hub.png" alt="EventHub" className="h-10 w-auto object-contain" />
+              )}
+            </div>
           </Link>
-
-          <nav className="flex items-center gap-2 text-sm">
-            <Link
-              to={`/${orgSlug}`}
-              className="px-4 py-2 rounded-lg font-medium text-slate-600 hover:bg-slate-100 transition-colors"
-            >
-              Events
-            </Link>
-          </nav>
         </div>
 
         {/* Brand color accent line */}
