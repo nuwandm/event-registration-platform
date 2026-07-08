@@ -4,7 +4,6 @@ import { tenantService } from '../services/tenantService';
 import { Admin } from '../models/Admin';
 import { AuthRequest } from '../types';
 import { AppError } from '../middleware/errorHandler';
-import bcrypt from 'bcryptjs';
 
 export const signupValidation = [
   body('orgName').trim().notEmpty().withMessage('Organization name is required').isLength({ max: 150 }),
@@ -65,11 +64,11 @@ export const tenantController = {
       );
 
       // Create the org_admin account linked to tenant
-      const hashedPassword = await bcrypt.hash(adminPassword, 12);
+      // NOTE: Admin pre-save hook hashes the password — pass plain text here
       await Admin.create({
         name: adminName,
         email: adminEmail.toLowerCase(),
-        password: hashedPassword,
+        password: adminPassword,
         role: 'org_admin',
         tenantId: tenant._id,
       });
