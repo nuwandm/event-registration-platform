@@ -38,8 +38,7 @@ export const attendanceController = {
       const tenantId = req.tenant ? String(req.tenant._id) : '';
       const result = await attendanceService.scanQR(qrData, String(req.admin._id), tenantId, ipAddress, eventId);
 
-      const httpStatus = result.outcome === 'success' ? 200 : result.outcome === 'duplicate' ? 200 : 422;
-      res.status(httpStatus).json({ success: true, message: result.message, data: result });
+      res.status(200).json({ success: true, message: result.message, data: result });
     } catch (error) {
       next(error);
     }
