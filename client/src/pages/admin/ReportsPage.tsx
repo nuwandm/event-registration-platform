@@ -27,8 +27,11 @@ const STATUS_OPTIONS: { value: RegistrationStatus; label: string }[] = [
 ];
 
 // ── Download helper ───────────────────────────────────────────────────────────
+const API_BASE = (import.meta.env.VITE_API_URL ?? '/api').replace(/\/$/, '');
+
 async function triggerDownload(url: string, defaultName: string) {
-  const res = await fetch(url, {
+  const fullUrl = url.startsWith('http') ? url : `${API_BASE}${url.startsWith('/api') ? url.slice(4) : url}`;
+  const res = await fetch(fullUrl, {
     headers: {
       Authorization: `Bearer ${JSON.parse(localStorage.getItem('auth-storage') ?? '{}')?.state?.token ?? ''}`,
     },
