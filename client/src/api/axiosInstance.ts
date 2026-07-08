@@ -20,11 +20,13 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    const url: string = error.config?.url ?? '';
+    const isLoginEndpoint = url.includes('/login');
+    // Only redirect on 401 for authenticated requests (not login attempts)
+    if (error.response?.status === 401 && !isLoginEndpoint) {
       const { orgSlug } = useAuthStore.getState();
       useAuthStore.getState().logout();
-      // Redirect to org login or super admin login
-      window.location.href = orgSlug ? `/${orgSlug}/admin/login` : '/superadmin/login';
+      window.location.href = orgSlug ? `/${orgSlug}/admin/login` : '/login';
     }
     return Promise.reject(error);
   }
