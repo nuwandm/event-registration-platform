@@ -118,6 +118,18 @@ function QuestionBuilderItem({ index, control, register, watch, onRemove }: Ques
                     <div className="space-y-2">
                       {opts.map((opt, optIdx) => (
                         <div key={optIdx} className="flex items-center gap-2">
+                          {/* Visual indicator matching the question type */}
+                          {questionType === 'radio' && (
+                            <div className="w-4 h-4 rounded-full border-2 border-slate-300 shrink-0" />
+                          )}
+                          {questionType === 'checkbox' && (
+                            <div className="w-4 h-4 rounded border-2 border-slate-300 shrink-0" />
+                          )}
+                          {questionType === 'dropdown' && (
+                            <span className="text-xs text-slate-400 shrink-0 w-4 text-center font-medium">
+                              {optIdx + 1}.
+                            </span>
+                          )}
                           <Input
                             value={opt}
                             onChange={(e) => {
