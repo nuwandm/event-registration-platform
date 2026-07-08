@@ -92,8 +92,8 @@ function ReportCard({
   onExport, exporting, extraFilters,
 }: ReportCardProps) {
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-5">
-      <div className="flex items-start gap-4">
+    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 flex flex-col">
+      <div className="flex items-start gap-4 mb-5">
         <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${iconBg}`}>
           <Icon className={`w-6 h-6 ${iconColor}`} />
         </div>
@@ -103,9 +103,11 @@ function ReportCard({
         </div>
       </div>
 
-      {extraFilters}
+      <div className="flex-1">
+        {extraFilters}
+      </div>
 
-      <Button onClick={onExport} disabled={exporting} className="w-full">
+      <Button onClick={onExport} disabled={exporting} className="w-full mt-5">
         {exporting ? (
           <>
             <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
@@ -145,12 +147,22 @@ export function ReportsPage() {
     return p.toString();
   };
 
+  const selectedEventName = events.find((e) => e._id === eventId)?.name ?? '';
+  const ext = fmt === 'excel' ? 'xlsx' : fmt;
+
+  const buildFilename = (type: 'registrations' | 'attendance') => {
+    const slug = selectedEventName
+      ? selectedEventName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+      : 'all-events';
+    return `${type}_${slug}.${ext}`;
+  };
+
   const handleExportRegistrations = async () => {
     setExportingReg(true);
     try {
       const extra: Record<string, string> = {};
       if (regStatus !== 'all') extra.status = regStatus;
-      await triggerDownload(`/api/reports/registrations?${buildParams(extra)}`, `registrations.${fmt === 'excel' ? 'xlsx' : fmt}`);
+      await triggerDownload(`/api/reports/registrations?${buildParams(extra)}`, buildFilename('registrations'));
       toast.success('Registrations report downloaded');
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Export failed');
@@ -162,7 +174,7 @@ export function ReportsPage() {
   const handleExportAttendance = async () => {
     setExportingAtt(true);
     try {
-      await triggerDownload(`/api/reports/attendance?${buildParams()}`, `attendance.${fmt === 'excel' ? 'xlsx' : fmt}`);
+      await triggerDownload(`/api/reports/attendance?${buildParams()}`, buildFilename('attendance'));
       toast.success('Attendance report downloaded');
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Export failed');
