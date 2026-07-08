@@ -22,6 +22,7 @@ export interface CreateEventDTO {
     branch: string;
   };
   status?: 'draft' | 'published' | 'closed';
+  bannerPosition?: { x: number; y: number };
 }
 
 export const eventService = {
@@ -66,6 +67,7 @@ export const eventService = {
       registrationCloseDate: new Date(dto.registrationCloseDate),
       bannerImage,
       bannerImagePublicId,
+      bannerPosition: dto.bannerPosition,
       createdBy: adminId as unknown as import('mongoose').Types.ObjectId,
     });
 
@@ -80,7 +82,7 @@ export const eventService = {
     const existing = await eventRepository.findById(id);
     if (!existing) throw new AppError('Event not found', 404);
 
-    const payload: Partial<IEvent> = { ...dto } as Partial<IEvent>;
+    const payload: Partial<IEvent> & { bannerPosition?: { x: number; y: number } } = { ...dto } as Partial<IEvent>;
 
     if (dto.eventDate) payload.eventDate = new Date(dto.eventDate);
     if (dto.registrationOpenDate) payload.registrationOpenDate = new Date(dto.registrationOpenDate);

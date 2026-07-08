@@ -49,6 +49,7 @@ export interface Event {
   registrationFee: number;
   bankDetails: BankDetails;
   bannerImage?: string;
+  bannerPosition?: { x: number; y: number };
   status: EventStatus;
   registrationCount: number;
   createdAt: string;

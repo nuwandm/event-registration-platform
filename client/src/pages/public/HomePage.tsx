@@ -25,6 +25,7 @@ function EventCard({ event }: { event: Event }) {
             src={event.bannerImage}
             alt={event.name}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            style={event.bannerPosition ? { objectPosition: `${event.bannerPosition.x}% ${event.bannerPosition.y}%` } : undefined}
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">

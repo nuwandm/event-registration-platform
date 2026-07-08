@@ -23,6 +23,7 @@ export interface IEvent extends Document {
   bankDetails: IBankDetails;
   bannerImage?: string;
   bannerImagePublicId?: string;
+  bannerPosition?: { x: number; y: number };
   status: EventStatus;
   registrationCount: number;
   createdBy: mongoose.Types.ObjectId;
@@ -92,6 +93,10 @@ const eventSchema = new Schema<IEvent>(
     },
     bannerImage: { type: String },
     bannerImagePublicId: { type: String },
+    bannerPosition: {
+      type: { x: { type: Number }, y: { type: Number } },
+      default: undefined,
+    },
     status: {
       type: String,
       enum: ['draft', 'published', 'closed'],

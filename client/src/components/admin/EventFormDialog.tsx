@@ -1,9 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { useForm, Controller, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { ImagePlus, X, CalendarDays, CreditCard } from 'lucide-react';
+import { ImagePlus, X, CalendarDays, CreditCard, Move } from 'lucide-react';
 
 import { eventFormSchema, type EventFormValues } from '@/schemas/event';
 import { eventsApi } from '@/api/eventsApi';
@@ -49,6 +49,9 @@ export function EventFormDialog({ open, onClose, event }: EventFormDialogProps) 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [bannerPreview, setBannerPreview] = useState<string | null>(null);
+  const [bannerPos, setBannerPos] = useState<{ x: number; y: number }>({ x: 50, y: 50 });
+  const isDragging = useRef(false);
+  const dragImgRef = useRef<HTMLDivElement>(null);
 
   const {
     register,
@@ -82,6 +85,7 @@ export function EventFormDialog({ open, onClose, event }: EventFormDialogProps) 
         bankDetails: event.bankDetails,
       });
       setBannerPreview(event.bannerImage ?? null);
+      setBannerPos(event.bannerPosition ?? { x: 50, y: 50 });
     } else {
       reset({
         status: 'draft',
@@ -89,13 +93,14 @@ export function EventFormDialog({ open, onClose, event }: EventFormDialogProps) 
         bankDetails: { bankName: '', accountName: '', accountNumber: '', branch: '' },
       });
       setBannerPreview(null);
+      setBannerPos({ x: 50, y: 50 });
     }
     setBannerFile(null);
   }, [event, reset, open]);
 
   const { mutate, isPending } = useMutation({
     mutationFn: (data: EventFormValues) => {
-      const payload = { ...data, maxParticipants: data.maxParticipants || undefined };
+      const payload = { ...data, maxParticipants: data.maxParticipants || undefined, bannerPosition: bannerPos };
       if (isEditing) return eventsApi.update(event!._id, payload as Record<string, unknown>, bannerFile ?? undefined);
       return eventsApi.create(payload as Record<string, unknown>, bannerFile ?? undefined);
     },
@@ -124,7 +129,34 @@ export function EventFormDialog({ open, onClose, event }: EventFormDialogProps) 
     setBannerFile(null);
     setBannerPreview(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
+    setBannerPos({ x: 50, y: 50 });
   };
+
+  const handleDragStart = useCallback((e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
+    isDragging.current = true;
+    e.preventDefault();
+  }, []);
+
+  const calcPos = useCallback((clientX: number, clientY: number) => {
+    const el = dragImgRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const x = Math.min(100, Math.max(0, Math.round(((clientX - rect.left) / rect.width) * 100)));
+    const y = Math.min(100, Math.max(0, Math.round(((clientY - rect.top) / rect.height) * 100)));
+    setBannerPos({ x, y });
+  }, []);
+
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isDragging.current) return;
+    calcPos(e.clientX, e.clientY);
+  }, [calcPos]);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
+    if (!isDragging.current || !e.touches[0]) return;
+    calcPos(e.touches[0].clientX, e.touches[0].clientY);
+  }, [calcPos]);
+
+  const handleDragEnd = useCallback(() => { isDragging.current = false; }, []);
 
   const statusValue = watch('status');
 
@@ -151,15 +183,62 @@ export function EventFormDialog({ open, onClose, event }: EventFormDialogProps) 
           <div>
             <Label className="mb-1.5 block">Banner Image</Label>
             {bannerPreview ? (
-              <div className="relative rounded-xl overflow-hidden border border-slate-200">
-                <img src={bannerPreview} alt="Banner preview" className="w-full h-40 object-cover" />
-                <button
-                  type="button"
-                  onClick={removeBanner}
-                  className="absolute top-2 right-2 p-1.5 bg-black/60 rounded-full text-white hover:bg-black/80 transition-colors"
+              <div className="space-y-2">
+                {/* Drag area */}
+                <div
+                  ref={dragImgRef}
+                  className="relative rounded-xl overflow-hidden border border-slate-200 h-40 cursor-crosshair select-none"
+                  onMouseDown={handleDragStart}
+                  onMouseMove={handleMouseMove}
+                  onMouseUp={handleDragEnd}
+                  onMouseLeave={handleDragEnd}
+                  onTouchStart={handleDragStart}
+                  onTouchMove={handleTouchMove}
+                  onTouchEnd={handleDragEnd}
                 >
-                  <X className="w-3.5 h-3.5" />
-                </button>
+                  <img
+                    src={bannerPreview}
+                    alt="Banner preview"
+                    className="w-full h-full object-cover pointer-events-none"
+                    style={{ objectPosition: `${bannerPos.x}% ${bannerPos.y}%` }}
+                    draggable={false}
+                  />
+                  {/* Focal point crosshair */}
+                  <div
+                    className="absolute w-6 h-6 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
+                    style={{ left: `${bannerPos.x}%`, top: `${bannerPos.y}%` }}
+                  >
+                    <div className="absolute inset-0 rounded-full border-2 border-white shadow-md" />
+                    <div className="absolute left-1/2 top-0 bottom-0 w-px bg-white/80 -translate-x-1/2" />
+                    <div className="absolute top-1/2 left-0 right-0 h-px bg-white/80 -translate-y-1/2" />
+                  </div>
+                  {/* Drag hint overlay */}
+                  <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1.5 bg-black/50 text-white text-xs px-2.5 py-1 rounded-full pointer-events-none">
+                    <Move className="w-3 h-3" />
+                    Drag to reposition
+                  </div>
+                  {/* Remove button */}
+                  <button
+                    type="button"
+                    onClick={removeBanner}
+                    className="absolute top-2 right-2 p-1.5 bg-black/60 rounded-full text-white hover:bg-black/80 transition-colors"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                {/* Position readout + change button */}
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-slate-400">
+                    Position: {bannerPos.x}% / {bannerPos.y}%
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="text-xs text-blue-600 hover:underline"
+                  >
+                    Change image
+                  </button>
+                </div>
               </div>
             ) : (
               <button

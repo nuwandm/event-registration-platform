@@ -205,11 +205,16 @@ export function RegisterPage() {
       {/* Google Forms style hero card */}
       <div className="rounded-2xl overflow-hidden border border-slate-200 shadow-sm mb-6">
         {/* Full-width banner */}
-        <div className="relative w-full h-44 sm:h-56 bg-linear-to-br from-blue-500 to-indigo-700">
+        <div className="relative w-full bg-linear-to-br from-blue-500 to-indigo-700">
           {event.bannerImage ? (
-            <img src={event.bannerImage} alt={event.name} className="w-full h-full object-cover" />
+            <img
+              src={event.bannerImage}
+              alt={event.name}
+              className="w-full h-auto block"
+              style={event.bannerPosition ? { objectPosition: `${event.bannerPosition.x}% ${event.bannerPosition.y}%` } : undefined}
+            />
           ) : (
-            <div className="w-full h-full flex items-center justify-center">
+            <div className="w-full h-44 sm:h-56 flex items-center justify-center">
               <CalendarDays className="w-16 h-16 text-white/20" />
             </div>
           )}

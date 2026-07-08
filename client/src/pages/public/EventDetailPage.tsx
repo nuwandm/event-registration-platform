@@ -52,11 +52,16 @@ export function EventDetailPage() {
       </Link>
 
       {/* Banner */}
-      <div className="relative rounded-2xl overflow-hidden h-56 sm:h-72 bg-gradient-to-br from-blue-500 to-indigo-600 mb-7">
+      <div className="relative rounded-2xl overflow-hidden mb-7 bg-linear-to-br from-blue-500 to-indigo-600">
         {event.bannerImage ? (
-          <img src={event.bannerImage} alt={event.name} className="w-full h-full object-cover" />
+          <img
+            src={event.bannerImage}
+            alt={event.name}
+            className="w-full h-auto block"
+            style={event.bannerPosition ? { objectPosition: `${event.bannerPosition.x}% ${event.bannerPosition.y}%` } : undefined}
+          />
         ) : (
-          <div className="w-full h-full flex items-center justify-center">
+          <div className="w-full h-56 sm:h-72 flex items-center justify-center">
             <CalendarDays className="w-20 h-20 text-white/20" />
           </div>
         )}

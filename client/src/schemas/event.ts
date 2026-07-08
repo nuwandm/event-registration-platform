@@ -21,6 +21,7 @@ export const eventFormSchema = z.object({
   ]).optional(),
   status: z.enum(['draft', 'published', 'closed']),
   bankDetails: bankDetailsSchema,
+  bannerPosition: z.object({ x: z.number(), y: z.number() }).optional(),
 });
 
 export interface EventFormValues {
@@ -39,4 +40,5 @@ export interface EventFormValues {
     accountNumber: string;
     branch: string;
   };
+  bannerPosition?: { x: number; y: number };
 }
