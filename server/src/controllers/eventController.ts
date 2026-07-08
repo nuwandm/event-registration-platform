@@ -125,4 +125,17 @@ export const eventController = {
       next(error);
     }
   },
+
+  async toggleAdmission(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const event = await eventService.toggleAdmission(req.params.id);
+      res.json({
+        success: true,
+        message: event.admissionOpen ? 'Admission opened' : 'Admission closed',
+        data: { event },
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
 };

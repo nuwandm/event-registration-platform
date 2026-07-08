@@ -14,6 +14,7 @@ router.get('/admin/events', authGuard, eventController.getAllEvents);
 router.get('/admin/events/:id', authGuard, eventController.getEventById);
 router.post('/admin/events', authGuard, uploadBanner, createEventValidation, eventController.createEvent);
 router.put('/admin/events/:id', authGuard, uploadBanner, eventController.updateEvent);
+router.patch('/admin/events/:id/admission', authGuard, eventController.toggleAdmission);
 router.delete('/admin/events/:id', authGuard, eventController.deleteEvent);
 
 export default router;

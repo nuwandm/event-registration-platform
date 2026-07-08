@@ -44,4 +44,7 @@ export const eventsApi = {
     }),
 
   delete: (id: string) => api.delete<ApiResponse>(`/admin/events/${id}`),
+
+  toggleAdmission: (id: string) =>
+    api.patch<ApiResponse<{ event: Event }>>(`/admin/events/${id}/admission`),
 };

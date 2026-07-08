@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
   Plus, Pencil, Trash2, CalendarDays, Search, ChevronLeft, ChevronRight,
-  UserCog, X, Link2, Copy, Check, ExternalLink,
+  UserCog, X, Link2, Copy, Check, ExternalLink, MoreVertical,
+  Users, DoorOpen, DoorClosed,
 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -229,6 +231,51 @@ function ManageStaffDialog({ event, onClose }: { event: Event; onClose: () => vo
   );
 }
 
+// ── Kebab Menu ────────────────────────────────────────────────────────────────
+interface KebabItem {
+  icon: React.ElementType;
+  label: string;
+  onClick: () => void;
+  className?: string;
+}
+function KebabMenu({ items }: { items: KebabItem[] }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
+      >
+        <MoreVertical className="w-4 h-4" />
+      </button>
+      {open && (
+        <div className="absolute right-0 top-8 z-50 w-52 bg-white rounded-xl border border-slate-200 shadow-lg py-1 animate-fade-in">
+          {items.map((item) => (
+            <button
+              key={item.label}
+              onClick={() => { item.onClick(); setOpen(false); }}
+              className={`w-full flex items-center gap-2.5 px-4 py-2.5 text-sm hover:bg-slate-50 transition-colors text-left ${item.className ?? 'text-slate-700'}`}
+            >
+              <item.icon className="w-4 h-4 shrink-0" />
+              {item.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 const STATUS_BADGE: Record<string, 'success' | 'warning' | 'secondary' | 'destructive'> = {
   published: 'success',
   draft: 'warning',
@@ -237,6 +284,7 @@ const STATUS_BADGE: Record<string, 'success' | 'warning' | 'secondary' | 'destru
 
 export function EventsPage() {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [searchInput, setSearchInput] = useState('');
@@ -261,6 +309,16 @@ export function EventsPage() {
       setDeletingEvent(null);
     },
     onError: () => toast.error('Failed to delete event'),
+  });
+
+  const admissionMutation = useMutation({
+    mutationFn: (id: string) => eventsApi.toggleAdmission(id),
+    onSuccess: (res) => {
+      const ev = res.data.data?.event;
+      toast.success(ev?.admissionOpen ? 'Admission opened — QR scanning is now live' : 'Admission closed');
+      queryClient.invalidateQueries({ queryKey: ['admin-events'] });
+    },
+    onError: () => toast.error('Failed to toggle admission'),
   });
 
   const handleSearch = (e: React.FormEvent) => {
@@ -362,7 +420,7 @@ export function EventsPage() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-slate-500 hidden md:table-cell max-w-[180px] truncate">{event.venue}</td>
+                    <td className="px-4 py-3 text-slate-500 hidden md:table-cell max-w-45 truncate">{event.venue}</td>
                     <td className="px-4 py-3 text-slate-500 hidden lg:table-cell whitespace-nowrap">
                       {format(new Date(event.eventDate), 'MMM d, yyyy')}
                     </td>
@@ -379,21 +437,48 @@ export function EventsPage() {
                       {event.maxParticipants ? ` / ${event.maxParticipants}` : ''}
                     </td>
                     <td className="px-4 py-3">
-                      <div className="flex items-center gap-1 justify-end">
-                        <Button variant="ghost" size="icon" onClick={() => setShareEvent(event)} title="Share registration link"
-                          className="text-blue-400 hover:text-blue-600 hover:bg-blue-50">
-                          <Link2 className="w-3.5 h-3.5" />
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => setStaffEvent(event)} title="Manage Staff">
-                          <UserCog className="w-3.5 h-3.5" />
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => openEdit(event)} title="Edit">
-                          <Pencil className="w-3.5 h-3.5" />
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => setDeletingEvent(event)} title="Delete"
-                          className="text-red-400 hover:text-red-600 hover:bg-red-50">
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </Button>
+                      <div className="flex items-center justify-end">
+                        {/* Admission status pill */}
+                        {event.admissionOpen && (
+                          <span className="mr-2 flex items-center gap-1 text-xs font-medium text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                            Live
+                          </span>
+                        )}
+                        <KebabMenu items={[
+                          {
+                            icon: Users,
+                            label: 'View Participants',
+                            onClick: () => navigate(`/admin/registrations?eventId=${event._id}`),
+                          },
+                          {
+                            icon: Link2,
+                            label: 'Share Link',
+                            onClick: () => setShareEvent(event),
+                          },
+                          {
+                            icon: UserCog,
+                            label: 'Manage Staff',
+                            onClick: () => setStaffEvent(event),
+                          },
+                          {
+                            icon: Pencil,
+                            label: 'Edit Event',
+                            onClick: () => openEdit(event),
+                          },
+                          {
+                            icon: event.admissionOpen ? DoorClosed : DoorOpen,
+                            label: event.admissionOpen ? 'Close Admission' : 'Open Admission',
+                            onClick: () => admissionMutation.mutate(event._id),
+                            className: event.admissionOpen ? 'text-amber-600' : 'text-emerald-600',
+                          },
+                          {
+                            icon: Trash2,
+                            label: 'Delete Event',
+                            onClick: () => setDeletingEvent(event),
+                            className: 'text-red-500',
+                          },
+                        ]} />
                       </div>
                     </td>
                   </tr>

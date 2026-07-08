@@ -50,6 +50,7 @@ export interface Event {
   bankDetails: BankDetails;
   bannerImage?: string;
   bannerPosition?: { x: number; y: number };
+  admissionOpen: boolean;
   status: EventStatus;
   registrationCount: number;
   createdAt: string;

@@ -24,6 +24,7 @@ export interface IEvent extends Document {
   bannerImage?: string;
   bannerImagePublicId?: string;
   bannerPosition?: { x: number; y: number };
+  admissionOpen: boolean;
   status: EventStatus;
   registrationCount: number;
   createdBy: mongoose.Types.ObjectId;
@@ -97,6 +98,7 @@ const eventSchema = new Schema<IEvent>(
       type: { x: { type: Number }, y: { type: Number } },
       default: undefined,
     },
+    admissionOpen: { type: Boolean, default: false },
     status: {
       type: String,
       enum: ['draft', 'published', 'closed'],

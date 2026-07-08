@@ -56,6 +56,11 @@ export const attendanceService = {
     if (restrictToEventId && eventId !== restrictToEventId) {
       return { outcome: 'invalid', message: 'This QR code does not belong to your assigned event' };
     }
+
+    // 3b. Check admission is open for this event
+    if (!eventDoc?.admissionOpen) {
+      return { outcome: 'invalid', message: 'Admission has not been opened for this event yet' };
+    }
     const regId = String(registration._id);
 
     // 3. Validate token — constant-time compare not needed here since token is a UUID

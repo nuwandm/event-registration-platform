@@ -103,6 +103,14 @@ export const eventService = {
     return updated;
   },
 
+  async toggleAdmission(id: string): Promise<IEvent> {
+    const existing = await eventRepository.findById(id);
+    if (!existing) throw new AppError('Event not found', 404);
+    const updated = await eventRepository.update(id, { admissionOpen: !existing.admissionOpen } as Partial<IEvent>);
+    if (!updated) throw new AppError('Event not found', 404);
+    return updated;
+  },
+
   async deleteEvent(id: string): Promise<void> {
     const event = await eventRepository.findById(id);
     if (!event) throw new AppError('Event not found', 404);

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Users, Search, ChevronLeft, ChevronRight, Eye } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
+import { Users, Search, ChevronLeft, ChevronRight, Eye, X } from 'lucide-react';
 import { format } from 'date-fns';
 
 import { registrationsApi } from '@/api/registrationsApi';
@@ -35,6 +36,9 @@ const ATTENDANCE_BADGE: Record<string, 'success' | 'secondary'> = {
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 export function RegistrationsPage() {
+  const [urlParams, setUrlParams] = useSearchParams();
+  const eventIdFilter = urlParams.get('eventId') ?? '';
+
   const [page, setPage] = useState(1);
   const [activeTab, setActiveTab] = useState('');
   const [search, setSearch] = useState('');
@@ -42,13 +46,14 @@ export function RegistrationsPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const { data, isLoading } = useQuery({
-    queryKey: ['admin-registrations', page, activeTab, search],
+    queryKey: ['admin-registrations', page, activeTab, search, eventIdFilter],
     queryFn: () =>
       registrationsApi.getAll({
         page,
         limit: 15,
         status: activeTab || undefined,
         search: search || undefined,
+        eventId: eventIdFilter || undefined,
       }),
     select: (res) => res.data.data,
   });
@@ -76,6 +81,20 @@ export function RegistrationsPage() {
         title="Registrations"
         description={`${total} registration${total !== 1 ? 's' : ''} found`}
       />
+
+      {/* Event filter banner */}
+      {eventIdFilter && (
+        <div className="flex items-center gap-2 mb-4 bg-blue-50 border border-blue-200 rounded-xl px-4 py-2.5 text-sm text-blue-700">
+          <Users className="w-4 h-4 shrink-0" />
+          <span className="flex-1">Showing participants for selected event</span>
+          <button
+            onClick={() => { setUrlParams({}); setPage(1); }}
+            className="flex items-center gap-1 text-xs font-medium text-blue-500 hover:text-blue-700"
+          >
+            <X className="w-3.5 h-3.5" /> Clear filter
+          </button>
+        </div>
+      )}
 
       {/* Filter tabs */}
       <div className="flex flex-wrap gap-1 mb-4 bg-slate-100 p-1 rounded-xl w-fit">
