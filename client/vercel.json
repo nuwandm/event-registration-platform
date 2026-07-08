@@ -1,7 +1,7 @@
 {
-  "routes": [
+  "rewrites": [
     {
-      "src": "/([^/]+)/events/([^/]+)/register",
+      "source": "/:orgSlug/events/:slug/register",
       "has": [
         {
           "type": "header",
@@ -9,11 +9,11 @@
           "value": ".*(facebookexternalhit|Twitterbot|WhatsApp|LinkedInBot|TelegramBot|Slackbot|Discordbot|vkShare|Pinterest|Googlebot).*"
         }
       ],
-      "dest": "/api/og-proxy/$1/$2"
+      "destination": "/api/og-proxy/:orgSlug/:slug"
     },
     {
-      "src": "/(.*)",
-      "dest": "/index.html"
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ]
 }
