@@ -29,7 +29,9 @@ interface EventFormDialogProps {
 
 const toDatetimeLocal = (dateStr?: string) => {
   if (!dateStr) return '';
-  return new Date(dateStr).toISOString().slice(0, 16);
+  // Return full ISO string — DateTimePicker parses it as a Date object
+  // which automatically applies local timezone for display
+  return new Date(dateStr).toISOString();
 };
 
 function SectionHeading({ icon: Icon, label }: { icon: React.ElementType; label: string }) {
