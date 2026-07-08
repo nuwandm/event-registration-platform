@@ -1,7 +1,7 @@
 import { Outlet, Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
   LayoutDashboard, CalendarDays, Users, ScanLine,
-  FileBarChart2, LogOut, Menu, X, UserCog, Palette,
+  FileBarChart2, LogOut, Menu, X, UserCog, Palette, CircleUserRound,
 } from 'lucide-react';
 import { useState } from 'react';
 import { useAuthStore } from '@/store/authStore';
@@ -79,10 +79,22 @@ export function AdminLayout() {
       </div>
 
       <div className="px-3 py-4 border-t border-slate-700">
-        <div className="px-3 py-2 mb-2">
-          <p className="text-xs font-medium text-white truncate">{admin?.name}</p>
-          <p className="text-xs text-slate-400 truncate">{admin?.email}</p>
-        </div>
+        <Link
+          to={`${base}/profile`}
+          onClick={() => setSidebarOpen(false)}
+          className={cn(
+            'flex items-center gap-3 px-3 py-2.5 rounded-lg mb-1 transition-colors',
+            isActive(`${base}/profile`)
+              ? 'bg-blue-600 text-white'
+              : 'text-slate-300 hover:bg-slate-700 hover:text-white'
+          )}
+        >
+          <CircleUserRound className="w-4 h-4 shrink-0" />
+          <div className="min-w-0">
+            <p className="text-xs font-medium truncate leading-tight">{admin?.name}</p>
+            <p className="text-xs text-slate-400 truncate leading-tight">{admin?.email}</p>
+          </div>
+        </Link>
         <Button
           variant="ghost"
           size="sm"
@@ -120,7 +132,7 @@ export function AdminLayout() {
             {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
           <h1 className="text-sm font-semibold text-slate-700 flex-1">
-            {navItems.find((n) => isActive(n.to, n.exact))?.label ?? 'Admin'}
+            {isActive(`${base}/profile`) ? 'My Profile' : navItems.find((n) => isActive(n.to, n.exact))?.label ?? 'Admin'}
           </h1>
           <span className="hidden sm:block text-xs text-slate-400 capitalize bg-slate-100 px-2 py-1 rounded-full">
             {admin?.role?.replace('_', ' ')}

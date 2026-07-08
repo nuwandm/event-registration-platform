@@ -23,6 +23,7 @@ import { AttendanceScannerPage } from '@/pages/admin/AttendanceScannerPage';
 import { ReportsPage } from '@/pages/admin/ReportsPage';
 import { UsersPage } from '@/pages/admin/UsersPage';
 import { BrandingPage } from '@/pages/admin/BrandingPage';
+import { ProfilePage } from '@/pages/admin/ProfilePage';
 
 // Super admin pages (no org scope)
 import { SuperAdminLoginPage } from '@/pages/superadmin/SuperAdminLoginPage';
@@ -95,6 +96,7 @@ const router = createBrowserRouter([
               { path: 'admin/reports', element: <ReportsPage /> },
               { path: 'admin/users', element: <UsersPage /> },
               { path: 'admin/branding', element: <BrandingPage /> },
+              { path: 'admin/profile', element: <ProfilePage /> },
             ],
           },
         ],

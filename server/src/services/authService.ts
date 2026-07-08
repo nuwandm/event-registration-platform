@@ -121,4 +121,14 @@ export const authService = {
     if (!admin) throw new AppError('Admin not found', 404);
     return admin;
   },
+
+  async changePassword(adminId: string, dto: { currentPassword: string; newPassword: string }): Promise<void> {
+    const admin = await Admin.findById(adminId).select('+password');
+    if (!admin) throw new AppError('Admin not found', 404);
+    if (!(await admin.comparePassword(dto.currentPassword))) {
+      throw new AppError('Current password is incorrect', 400);
+    }
+    admin.password = dto.newPassword;
+    await admin.save(); // pre-save hook hashes the new password
+  },
 };

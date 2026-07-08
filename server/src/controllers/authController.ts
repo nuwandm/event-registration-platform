@@ -69,4 +69,20 @@ export const authController = {
       next(error);
     }
   },
+
+  async changePassword(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      if (!req.admin) throw new AppError('Unauthorized', 401);
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        res.status(400).json({ success: false, message: 'Validation failed' });
+        return;
+      }
+      const { currentPassword, newPassword } = req.body as { currentPassword: string; newPassword: string };
+      await authService.changePassword(String(req.admin._id), { currentPassword, newPassword });
+      res.status(200).json({ success: true, message: 'Password changed successfully' });
+    } catch (error) {
+      next(error);
+    }
+  },
 };

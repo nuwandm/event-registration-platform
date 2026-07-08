@@ -10,4 +10,7 @@ export const authApi = {
 
   getMe: () =>
     api.get<ApiResponse<{ admin: AuthResponse['admin'] }>>('/auth/me'),
+
+  changePassword: (dto: { currentPassword: string; newPassword: string }) =>
+    api.post<ApiResponse<null>>('/auth/change-password', dto),
 };
