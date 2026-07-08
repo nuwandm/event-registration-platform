@@ -2,7 +2,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { CalendarDays, Eye, EyeOff, LogIn } from 'lucide-react';
+import { Eye, EyeOff, LogIn } from 'lucide-react';
 import { useState } from 'react';
 
 import { loginSchema, type LoginFormValues } from '@/schemas/auth';
@@ -50,11 +50,12 @@ export function LoginPage() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-600 shadow-lg mb-4">
-            <CalendarDays className="w-8 h-8 text-white" />
-          </div>
-          <h1 className="text-2xl font-bold text-white">EventHub</h1>
-          <p className="text-slate-400 text-sm mt-1">Admin Portal</p>
+          <img
+            src="/Event Hub.png"
+            alt="EventHub"
+            className="h-24 w-auto object-contain mx-auto brightness-0 invert drop-shadow-lg"
+          />
+          <p className="text-slate-400 text-sm mt-2">Admin Portal</p>
         </div>
 
         {/* Card */}
