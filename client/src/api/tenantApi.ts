@@ -24,16 +24,16 @@ export const tenantApi = {
     form.append('adminPassword', payload.adminPassword);
     if (payload.primaryColor) form.append('primaryColor', payload.primaryColor);
     if (payload.logo) form.append('banner', payload.logo);
-    return api.post<ApiResponse<{ tenantId: string; slug: string }>>('/tenants/signup', form, {
+    return api.post<ApiResponse<{ tenantId: string; slug: string }>>('/signup', form, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
   },
 
   checkSlug: (slug: string) =>
-    api.get<ApiResponse<{ available: boolean }>>('/tenants/check-slug', { params: { slug } }),
+    api.get<ApiResponse<{ available: boolean }>>('/check-slug', { params: { slug } }),
 
   getPublicInfo: (orgSlug: string) =>
-    api.get<ApiResponse<{ tenant: PublicTenantInfo }>>(`/tenants/${orgSlug}/public`),
+    api.get<ApiResponse<{ tenant: PublicTenantInfo }>>(`/${orgSlug}/public`),
 
   // Super admin
   superAdmin: {
