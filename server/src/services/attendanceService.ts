@@ -31,6 +31,7 @@ export const attendanceService = {
   async scanQR(
     qrData: string,
     adminId: string,
+    tenantId: string,
     ipAddress?: string,
     restrictToEventId?: string
   ): Promise<ScanResult> {
@@ -46,6 +47,11 @@ export const attendanceService = {
     // 2. Find registration
     const registration = await registrationRepository.findById(payload.id);
     if (!registration) {
+      return { outcome: 'invalid', message: 'Registration not found' };
+    }
+
+    // Verify registration belongs to this tenant
+    if (String(registration.tenantId) !== tenantId) {
       return { outcome: 'invalid', message: 'Registration not found' };
     }
 

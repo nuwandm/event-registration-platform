@@ -11,6 +11,7 @@ export interface IBankDetails {
 export type EventStatus = 'draft' | 'published' | 'closed';
 
 export interface IEvent extends Document {
+  tenantId: mongoose.Types.ObjectId;
   name: string;
   slug: string;
   description: string;
@@ -98,6 +99,12 @@ const eventSchema = new Schema<IEvent>(
       type: { x: { type: Number }, y: { type: Number } },
       default: undefined,
     },
+    tenantId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Tenant',
+      required: [true, 'Tenant is required'],
+      index: true,
+    },
     admissionOpen: { type: Boolean, default: false },
     status: {
       type: String,
@@ -130,7 +137,7 @@ eventSchema.pre('save', async function (next) {
   next();
 });
 
-eventSchema.index({ status: 1, eventDate: -1 });
-eventSchema.index({ createdBy: 1 });
+eventSchema.index({ tenantId: 1, status: 1, eventDate: -1 });
+eventSchema.index({ tenantId: 1, createdBy: 1 });
 
 export const Event = mongoose.model<IEvent>('Event', eventSchema);

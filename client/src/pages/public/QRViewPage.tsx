@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { Download, CheckCircle2, Clock, XCircle, CalendarDays, MapPin, Hash } from 'lucide-react';
 import { format } from 'date-fns';
 
-import { registrationsApi } from '@/api/registrationsApi';
+import { useTenant } from '@/context/TenantContext';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -36,11 +36,12 @@ const STATUS_CONFIG = {
 };
 
 export function QRViewPage() {
+  const { api, orgSlug } = useTenant();
   const { id } = useParams<{ id: string }>();
 
   const { data: registration, isLoading, isError } = useQuery({
     queryKey: ['registration-qr', id],
-    queryFn: () => registrationsApi.getStatus(id!),
+    queryFn: () => api.registrations.getStatus(id!),
     select: (res) => res.data.data?.registration,
     enabled: !!id,
     refetchInterval: (query) =>
@@ -69,7 +70,7 @@ export function QRViewPage() {
     return (
       <div className="max-w-md mx-auto px-4 py-16 text-center">
         <p className="text-slate-500 mb-4">Registration not found.</p>
-        <Button asChild variant="outline"><Link to="/">Back to events</Link></Button>
+        <Button asChild variant="outline"><Link to={`/${orgSlug}`}>Back to events</Link></Button>
       </div>
     );
   }

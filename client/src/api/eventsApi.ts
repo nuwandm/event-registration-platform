@@ -22,29 +22,33 @@ const buildFormData = (data: Record<string, unknown>, file?: File): FormData => 
   return form;
 };
 
-export const eventsApi = {
+export const eventsApi = (orgSlug: string) => ({
   // Public
-  getPublished: () => api.get<ApiResponse<{ events: Event[] }>>('/events'),
-  getBySlug: (slug: string) => api.get<ApiResponse<{ event: Event }>>(`/events/${slug}`),
+  getPublished: () =>
+    api.get<ApiResponse<{ events: Event[] }>>(`/${orgSlug}/events`),
+  getBySlug: (slug: string) =>
+    api.get<ApiResponse<{ event: Event }>>(`/${orgSlug}/events/${slug}`),
 
   // Admin
   getAll: (filters: EventFilters = {}) =>
-    api.get<ApiResponse<PaginatedResponse<Event>>>('/admin/events', { params: filters }),
+    api.get<ApiResponse<PaginatedResponse<Event>>>(`/${orgSlug}/admin/events`, { params: filters }),
 
-  getById: (id: string) => api.get<ApiResponse<{ event: Event }>>(`/admin/events/${id}`),
+  getById: (id: string) =>
+    api.get<ApiResponse<{ event: Event }>>(`/${orgSlug}/admin/events/${id}`),
 
   create: (data: Record<string, unknown>, bannerFile?: File) =>
-    api.post<ApiResponse<{ event: Event }>>('/admin/events', buildFormData(data, bannerFile), {
+    api.post<ApiResponse<{ event: Event }>>(`/${orgSlug}/admin/events`, buildFormData(data, bannerFile), {
       headers: { 'Content-Type': 'multipart/form-data' },
     }),
 
   update: (id: string, data: Record<string, unknown>, bannerFile?: File) =>
-    api.put<ApiResponse<{ event: Event }>>(`/admin/events/${id}`, buildFormData(data, bannerFile), {
+    api.put<ApiResponse<{ event: Event }>>(`/${orgSlug}/admin/events/${id}`, buildFormData(data, bannerFile), {
       headers: { 'Content-Type': 'multipart/form-data' },
     }),
 
-  delete: (id: string) => api.delete<ApiResponse>(`/admin/events/${id}`),
+  delete: (id: string) =>
+    api.delete<ApiResponse>(`/${orgSlug}/admin/events/${id}`),
 
   toggleAdmission: (id: string) =>
-    api.patch<ApiResponse<{ event: Event }>>(`/admin/events/${id}/admission`),
-};
+    api.patch<ApiResponse<{ event: Event }>>(`/${orgSlug}/admin/events/${id}/admission`),
+});

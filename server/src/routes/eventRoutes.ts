@@ -1,20 +1,12 @@
 import { Router } from 'express';
 import { eventController, createEventValidation } from '../controllers/eventController';
-import { authGuard } from '../middleware/authGuard';
 import { uploadBanner } from '../middleware/upload';
 
-const router = Router();
+// mergeParams allows access to :orgSlug from parent router
+const router = Router({ mergeParams: true });
 
-// ── Public ────────────────────────────────────────────────────────────────────
-router.get('/events', eventController.getPublishedEvents);
-router.get('/events/:slug', eventController.getPublicEventBySlug);
-
-// ── Admin ─────────────────────────────────────────────────────────────────────
-router.get('/admin/events', authGuard, eventController.getAllEvents);
-router.get('/admin/events/:id', authGuard, eventController.getEventById);
-router.post('/admin/events', authGuard, uploadBanner, createEventValidation, eventController.createEvent);
-router.put('/admin/events/:id', authGuard, uploadBanner, eventController.updateEvent);
-router.patch('/admin/events/:id/admission', authGuard, eventController.toggleAdmission);
-router.delete('/admin/events/:id', authGuard, eventController.deleteEvent);
+// ── Public (mounted at /:orgSlug/events) ──────────────────────────────────────
+router.get('/', eventController.getPublishedEvents);
+router.get('/:slug', eventController.getPublicEventBySlug);
 
 export default router;

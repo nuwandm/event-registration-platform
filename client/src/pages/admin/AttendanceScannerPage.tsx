@@ -6,8 +6,8 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 
-import { attendanceApi, type ScanResult } from '@/api/attendanceApi';
-import { eventsApi } from '@/api/eventsApi';
+import { type ScanResult } from '@/api/attendanceApi';
+import { useTenant } from '@/context/TenantContext';
 import { useQRScanner } from '@/hooks/useQRScanner';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { Button } from '@/components/ui/button';
@@ -138,6 +138,7 @@ interface RecentScan {
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 export function AttendanceScannerPage() {
+  const { api } = useTenant();
   const { admin } = useAuthStore();
   const isStaff = admin?.role === 'staff';
   const [selectedEventId, setSelectedEventId] = useState<string>(
@@ -146,7 +147,7 @@ export function AttendanceScannerPage() {
 
   const { data: eventsData } = useQuery({
     queryKey: ['all-events'],
-    queryFn: () => eventsApi.getAll({ limit: 100 }),
+    queryFn: () => api.events.getAll({ limit: 100 }),
     enabled: !isStaff,
   });
 
@@ -155,7 +156,7 @@ export function AttendanceScannerPage() {
   // For staff: fetch only their assigned event names
   const { data: staffEventsData } = useQuery({
     queryKey: ['staff-assigned-events', admin?.assignedEvents],
-    queryFn: () => eventsApi.getAll({ limit: 100 }),
+    queryFn: () => api.events.getAll({ limit: 100 }),
     enabled: isStaff,
   });
 
@@ -171,7 +172,7 @@ export function AttendanceScannerPage() {
   const cooldownRef = useRef(false);
 
   const { mutate: submitScan, isPending } = useMutation({
-    mutationFn: (qrData: string) => attendanceApi.scan(qrData, selectedEventId || undefined),
+    mutationFn: (qrData: string) => api.attendance.scan(qrData, selectedEventId || undefined),
     onSuccess: (res) => {
       const result = res.data.data!;
       setLastResult(result);

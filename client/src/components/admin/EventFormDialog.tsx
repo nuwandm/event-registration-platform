@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import { ImagePlus, X, CalendarDays, CreditCard, Move } from 'lucide-react';
 
 import { eventFormSchema, type EventFormValues } from '@/schemas/event';
-import { eventsApi } from '@/api/eventsApi';
+import { useTenant } from '@/context/TenantContext';
 import type { Event } from '@/types';
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle,
@@ -44,6 +44,7 @@ function SectionHeading({ icon: Icon, label }: { icon: React.ElementType; label:
 }
 
 export function EventFormDialog({ open, onClose, event }: EventFormDialogProps) {
+  const { api } = useTenant();
   const queryClient = useQueryClient();
   const isEditing = !!event;
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -101,8 +102,8 @@ export function EventFormDialog({ open, onClose, event }: EventFormDialogProps) 
   const { mutate, isPending } = useMutation({
     mutationFn: (data: EventFormValues) => {
       const payload = { ...data, maxParticipants: data.maxParticipants || undefined, bannerPosition: bannerPos };
-      if (isEditing) return eventsApi.update(event!._id, payload as Record<string, unknown>, bannerFile ?? undefined);
-      return eventsApi.create(payload as Record<string, unknown>, bannerFile ?? undefined);
+      if (isEditing) return api.events.update(event!._id, payload as Record<string, unknown>, bannerFile ?? undefined);
+      return api.events.create(payload as Record<string, unknown>, bannerFile ?? undefined);
     },
     onSuccess: () => {
       toast.success(isEditing ? 'Event updated successfully' : 'Event created successfully');

@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 
-import { registrationsApi } from '@/api/registrationsApi';
+import { useTenant } from '@/context/TenantContext';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { Event } from '@/types';
@@ -36,12 +36,13 @@ const STATUS_CONFIG = {
 };
 
 export function RegistrationStatusPage() {
+  const { api, orgSlug } = useTenant();
   const { refNumber } = useParams<{ refNumber: string }>();
   const navigate = useNavigate();
 
   const { data: registration, isLoading, isError } = useQuery({
     queryKey: ['registration-status-by-ref', refNumber],
-    queryFn: () => registrationsApi.checkByNumber(refNumber!),
+    queryFn: () => api.registrations.checkByNumber(refNumber!),
     select: (res) => res.data.data?.registration,
     enabled: !!refNumber,
     retry: false,
@@ -245,7 +246,7 @@ export function RegistrationStatusPage() {
 
         <div className="flex justify-center mt-4">
           <Button asChild variant="ghost" size="sm">
-            <Link to="/">
+            <Link to={`/${orgSlug}`}>
               <CalendarDays className="w-4 h-4 mr-1.5" /> Browse More Events
             </Link>
           </Button>

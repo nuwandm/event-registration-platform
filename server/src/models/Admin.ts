@@ -5,7 +5,8 @@ export interface IAdmin extends Document {
   name: string;
   email: string;
   password: string;
-  role: 'admin' | 'super_admin' | 'staff';
+  role: 'org_admin' | 'super_admin' | 'staff';
+  tenantId?: mongoose.Types.ObjectId;
   assignedEvents: mongoose.Types.ObjectId[];
   createdAt: Date;
   updatedAt: Date;
@@ -36,8 +37,13 @@ const adminSchema = new Schema<IAdmin>(
     },
     role: {
       type: String,
-      enum: ['admin', 'super_admin', 'staff'],
-      default: 'admin',
+      enum: ['org_admin', 'super_admin', 'staff'],
+      default: 'org_admin',
+    },
+    tenantId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Tenant',
+      index: true,
     },
     assignedEvents: [
       {

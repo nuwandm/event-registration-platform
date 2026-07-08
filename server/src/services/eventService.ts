@@ -26,12 +26,12 @@ export interface CreateEventDTO {
 }
 
 export const eventService = {
-  async getPublishedEvents(): Promise<LeanOrDoc[]> {
-    return eventRepository.findPublished();
+  async getPublishedEvents(tenantId: string): Promise<LeanOrDoc[]> {
+    return eventRepository.findPublished(tenantId);
   },
 
-  async getPublicEventBySlug(slug: string): Promise<LeanOrDoc> {
-    const event = await eventRepository.findBySlugPublic(slug);
+  async getPublicEventBySlug(slug: string, tenantId: string): Promise<LeanOrDoc> {
+    const event = await eventRepository.findBySlugPublic(slug, tenantId);
     if (!event) throw new AppError('Event not found', 404);
     return event;
   },
@@ -40,14 +40,15 @@ export const eventService = {
     return eventRepository.findAllPaginated(query);
   },
 
-  async getEventById(id: string): Promise<LeanOrDoc> {
-    const event = await eventRepository.findById(id);
+  async getEventById(id: string, tenantId: string): Promise<LeanOrDoc> {
+    const event = await eventRepository.findByIdForTenant(id, tenantId);
     if (!event) throw new AppError('Event not found', 404);
     return event;
   },
 
   async createEvent(
     dto: CreateEventDTO,
+    tenantId: string,
     adminId: string,
     bannerFile?: Express.Multer.File
   ): Promise<IEvent> {
@@ -55,13 +56,14 @@ export const eventService = {
     let bannerImagePublicId: string | undefined;
 
     if (bannerFile) {
-      const result = await uploadService.uploadImage(bannerFile.buffer, 'eventhub/banners');
+      const result = await uploadService.uploadImage(bannerFile.buffer, `eventhub/${tenantId}/banners`);
       bannerImage = result.url;
       bannerImagePublicId = result.publicId;
     }
 
     const event = await eventRepository.create({
       ...dto,
+      tenantId: tenantId as unknown as import('mongoose').Types.ObjectId,
       eventDate: new Date(dto.eventDate),
       registrationOpenDate: new Date(dto.registrationOpenDate),
       registrationCloseDate: new Date(dto.registrationCloseDate),
@@ -76,10 +78,11 @@ export const eventService = {
 
   async updateEvent(
     id: string,
+    tenantId: string,
     dto: Partial<CreateEventDTO>,
     bannerFile?: Express.Multer.File
   ): Promise<IEvent> {
-    const existing = await eventRepository.findById(id);
+    const existing = await eventRepository.findByIdForTenant(id, tenantId);
     if (!existing) throw new AppError('Event not found', 404);
 
     const payload: Partial<IEvent> & { bannerPosition?: { x: number; y: number } } = { ...dto } as Partial<IEvent>;
@@ -89,11 +92,10 @@ export const eventService = {
     if (dto.registrationCloseDate) payload.registrationCloseDate = new Date(dto.registrationCloseDate);
 
     if (bannerFile) {
-      // Delete old banner if it exists
       if (existing.bannerImagePublicId) {
         await uploadService.deleteFile(existing.bannerImagePublicId);
       }
-      const result = await uploadService.uploadImage(bannerFile.buffer, 'eventhub/banners');
+      const result = await uploadService.uploadImage(bannerFile.buffer, `eventhub/${tenantId}/banners`);
       payload.bannerImage = result.url;
       payload.bannerImagePublicId = result.publicId;
     }
@@ -103,16 +105,16 @@ export const eventService = {
     return updated;
   },
 
-  async toggleAdmission(id: string): Promise<IEvent> {
-    const existing = await eventRepository.findById(id);
+  async toggleAdmission(id: string, tenantId: string): Promise<IEvent> {
+    const existing = await eventRepository.findByIdForTenant(id, tenantId);
     if (!existing) throw new AppError('Event not found', 404);
     const updated = await eventRepository.update(id, { admissionOpen: !existing.admissionOpen } as Partial<IEvent>);
     if (!updated) throw new AppError('Event not found', 404);
     return updated;
   },
 
-  async deleteEvent(id: string): Promise<void> {
-    const event = await eventRepository.findById(id);
+  async deleteEvent(id: string, tenantId: string): Promise<void> {
+    const event = await eventRepository.findByIdForTenant(id, tenantId);
     if (!event) throw new AppError('Event not found', 404);
 
     if (event.bannerImagePublicId) {

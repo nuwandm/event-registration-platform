@@ -23,9 +23,14 @@ const extractErrors = (req: Request): Record<string, string> | null => {
   );
 };
 
+const requireTenant = (req: AuthRequest): string => {
+  if (!req.tenant) throw new AppError('Tenant context missing', 500);
+  return String(req.tenant._id);
+};
+
 export const registrationController = {
-  // POST /api/registrations/:eventId — Public
-  async submitRegistration(req: Request, res: Response, next: NextFunction): Promise<void> {
+  // POST /:orgSlug/registrations/:eventId — Public
+  async submitRegistration(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const fieldErrors = extractErrors(req);
       if (fieldErrors) {
@@ -38,8 +43,10 @@ export const registrationController = {
         return;
       }
 
+      const tenantId = requireTenant(req);
       const registration = await registrationService.submitRegistration(
         req.params.eventId,
+        tenantId,
         req.body,
         req.file
       );
@@ -58,7 +65,7 @@ export const registrationController = {
     }
   },
 
-  // GET /api/registrations/status/:id — Public
+  // GET /:orgSlug/registrations/status/:id — Public
   async getRegistrationStatus(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const registration = await registrationService.getRegistrationStatus(req.params.id);
@@ -68,7 +75,7 @@ export const registrationController = {
     }
   },
 
-  // GET /api/registrations/check/:registrationNumber — Public
+  // GET /:orgSlug/registrations/check/:registrationNumber — Public
   async checkByRegistrationNumber(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const registration = await registrationService.getStatusByRegistrationNumber(req.params.registrationNumber);
@@ -78,9 +85,10 @@ export const registrationController = {
     }
   },
 
-  // GET /api/admin/registrations — Admin
+  // GET /:orgSlug/admin/registrations — Admin
   async getAllRegistrations(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
+      const tenantId = requireTenant(req);
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 15;
       const status = req.query.status as string | undefined;
@@ -88,8 +96,7 @@ export const registrationController = {
       const search = req.query.search as string | undefined;
 
       const result = await registrationService.getAllRegistrations({
-        page,
-        limit,
+        page, limit, tenantId,
         status: status as RegistrationQuery['status'],
         eventId,
         search,
@@ -101,7 +108,7 @@ export const registrationController = {
     }
   },
 
-  // GET /api/admin/registrations/:id — Admin
+  // GET /:orgSlug/admin/registrations/:id — Admin
   async getRegistrationById(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const registration = await registrationService.getRegistrationById(req.params.id);
@@ -111,7 +118,7 @@ export const registrationController = {
     }
   },
 
-  // PUT /api/admin/registrations/:id/approve — Admin
+  // PUT /:orgSlug/admin/registrations/:id/approve — Admin
   async approveRegistration(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const { remarks } = req.body as { remarks?: string };
@@ -122,7 +129,7 @@ export const registrationController = {
     }
   },
 
-  // PUT /api/admin/registrations/:id/reject — Admin
+  // PUT /:orgSlug/admin/registrations/:id/reject — Admin
   async rejectRegistration(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const { remarks } = req.body as { remarks: string };
@@ -137,7 +144,7 @@ export const registrationController = {
     }
   },
 
-  // DELETE /api/admin/registrations/:id — Admin
+  // DELETE /:orgSlug/admin/registrations/:id — Admin
   async deleteRegistration(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const { reason } = req.body as { reason?: string };
@@ -152,7 +159,7 @@ export const registrationController = {
     }
   },
 
-  // PATCH /api/admin/registrations/:id — Admin (manual edit)
+  // PATCH /:orgSlug/admin/registrations/:id — Admin
   async updateRegistration(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const { status, attendanceStatus, adminRemarks } = req.body as {
@@ -172,5 +179,4 @@ export const registrationController = {
   },
 };
 
-// Needed for type reference
 import type { RegistrationQuery } from '../repositories/registrationRepository';

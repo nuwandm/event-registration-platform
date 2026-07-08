@@ -10,8 +10,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 
-import { eventsApi } from '@/api/eventsApi';
-import { usersApi } from '@/api/usersApi';
+import { useTenant } from '@/context/TenantContext';
 import type { Event, StaffUser } from '@/types';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { EmptyState } from '@/components/shared/EmptyState';
@@ -29,16 +28,16 @@ import {
 } from '@/components/ui/select';
 
 // ── Share Dialog ──────────────────────────────────────────────────────────────
-function ShareDialog({ event, onClose }: { event: Event; onClose: () => void }) {
+function ShareDialog({ event, orgSlug, onClose }: { event: Event; orgSlug: string; onClose: () => void }) {
   const [copied, setCopied] = useState(false);
   const [copiedDirect, setCopiedDirect] = useState(false);
 
   // OG link — goes through backend for rich social media preview
   const apiBase = (import.meta.env.VITE_API_URL as string ?? '/api').replace(/\/api$/, '');
-  const socialUrl = `${apiBase}/api/og/events/${event.slug}`;
+  const socialUrl = `${apiBase}/api/og/${orgSlug}/events/${event.slug}`;
 
   // Direct link — goes straight to the Vercel SPA
-  const directUrl = `${window.location.origin}/events/${event.slug}`;
+  const directUrl = `${window.location.origin}/${orgSlug}/events/${event.slug}`;
 
   const copy = async (url: string, setStat: (v: boolean) => void) => {
     await navigator.clipboard.writeText(url);
@@ -131,17 +130,20 @@ function ShareDialog({ event, onClose }: { event: Event; onClose: () => void }) 
 }
 
 // ── Manage Staff Dialog ───────────────────────────────────────────────────────
-function ManageStaffDialog({ event, onClose }: { event: Event; onClose: () => void }) {
+function ManageStaffDialog({ event, onClose, api }: {
+  event: Event; onClose: () => void;
+  api: ReturnType<typeof useTenant>['api'];
+}) {
   const qc = useQueryClient();
 
   const { data: allStaffData, isLoading: staffLoading } = useQuery({
     queryKey: ['staff-users'],
-    queryFn: () => usersApi.list(),
+    queryFn: () => api.users.list(),
   });
 
   const { data: assignedData } = useQuery({
     queryKey: ['event-staff', event._id],
-    queryFn: () => usersApi.getEventStaff(event._id),
+    queryFn: () => api.users.getEventStaff(event._id),
   });
 
   const allStaff: StaffUser[] = allStaffData?.data.data?.users ?? [];
@@ -154,7 +156,7 @@ function ManageStaffDialog({ event, onClose }: { event: Event; onClose: () => vo
   }
 
   const saveMutation = useMutation({
-    mutationFn: () => usersApi.setEventStaff(event._id, [...selected]),
+    mutationFn: () => api.users.setEventStaff(event._id, [...selected]),
     onSuccess: () => {
       toast.success('Staff updated');
       qc.invalidateQueries({ queryKey: ['event-staff', event._id] });
@@ -301,6 +303,7 @@ const STATUS_BADGE: Record<string, 'success' | 'warning' | 'secondary' | 'destru
 };
 
 export function EventsPage() {
+  const { api, orgSlug } = useTenant();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [page, setPage] = useState(1);
@@ -315,12 +318,12 @@ export function EventsPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin-events', page, search, statusFilter],
-    queryFn: () => eventsApi.getAll({ page, limit: 10, search: search || undefined, status: statusFilter || undefined }),
+    queryFn: () => api.events.getAll({ page, limit: 10, search: search || undefined, status: statusFilter || undefined }),
     select: (res) => res.data.data,
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => eventsApi.delete(id),
+    mutationFn: (id: string) => api.events.delete(id),
     onSuccess: () => {
       toast.success('Event deleted');
       queryClient.invalidateQueries({ queryKey: ['admin-events'] });
@@ -330,7 +333,7 @@ export function EventsPage() {
   });
 
   const admissionMutation = useMutation({
-    mutationFn: (id: string) => eventsApi.toggleAdmission(id),
+    mutationFn: (id: string) => api.events.toggleAdmission(id),
     onSuccess: (res) => {
       const ev = res.data.data?.event;
       toast.success(ev?.admissionOpen ? 'Admission opened — QR scanning is now live' : 'Admission closed');
@@ -423,7 +426,7 @@ export function EventsPage() {
               <tbody className="divide-y divide-slate-100">
                 {events.map((event) => (
                   <tr key={event._id} className="hover:bg-slate-50 transition-colors cursor-pointer"
-                    onClick={() => navigate(`/admin/events/${event._id}`)}>
+                    onClick={() => navigate(`/${orgSlug}/admin/events/${event._id}`)}>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         {event.bannerImage ? (
@@ -468,7 +471,7 @@ export function EventsPage() {
                           {
                             icon: Users,
                             label: 'View Participants',
-                            onClick: () => navigate(`/admin/events/${event._id}?tab=Participants`),
+                            onClick: () => navigate(`/${orgSlug}/admin/events/${event._id}?tab=Participants`),
                           },
                           {
                             icon: Link2,
@@ -529,10 +532,10 @@ export function EventsPage() {
       <EventFormDialog open={formOpen} onClose={closeForm} event={editingEvent} />
 
       {/* Share Dialog */}
-      {shareEvent && <ShareDialog event={shareEvent} onClose={() => setShareEvent(null)} />}
+      {shareEvent && <ShareDialog event={shareEvent} orgSlug={orgSlug} onClose={() => setShareEvent(null)} />}
 
       {/* Manage Staff Dialog */}
-      {staffEvent && <ManageStaffDialog event={staffEvent} onClose={() => setStaffEvent(null)} />}
+      {staffEvent && <ManageStaffDialog event={staffEvent} onClose={() => setStaffEvent(null)} api={api} />}
 
       {/* Delete Confirm */}
       <AlertDialog open={!!deletingEvent} onOpenChange={() => setDeletingEvent(null)}>

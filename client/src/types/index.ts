@@ -3,7 +3,8 @@ export interface Admin {
   id: string;
   name: string;
   email: string;
-  role: 'admin' | 'super_admin' | 'staff';
+  role: 'org_admin' | 'super_admin' | 'staff';
+  tenantId?: string;
   assignedEvents: string[];
 }
 
@@ -19,11 +20,35 @@ export interface StaffUser {
 export interface LoginCredentials {
   email: string;
   password: string;
+  orgSlug?: string;
 }
 
 export interface AuthResponse {
   token: string;
   admin: Admin;
+}
+
+// ── Tenant ────────────────────────────────────────────────────────────────────
+export type TenantStatus = 'pending' | 'active' | 'suspended';
+
+export interface Tenant {
+  _id: string;
+  name: string;
+  slug: string;
+  contactEmail: string;
+  logoUrl?: string;
+  primaryColor: string;
+  status: TenantStatus;
+  rejectionNote?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PublicTenantInfo {
+  name: string;
+  slug: string;
+  logoUrl?: string;
+  primaryColor: string;
 }
 
 // ── Event ─────────────────────────────────────────────────────────────────────
@@ -38,6 +63,7 @@ export interface BankDetails {
 
 export interface Event {
   _id: string;
+  tenantId: string;
   name: string;
   slug: string;
   description: string;
@@ -63,6 +89,7 @@ export type AttendanceStatus = 'not_attended' | 'attended';
 
 export interface Registration {
   _id: string;
+  tenantId: string;
   eventId: string | Event;
   registrationNumber: string;
   fullName: string;
@@ -120,4 +147,14 @@ export interface DashboardStats {
   totalAttended: number;
   todayAttendance: number;
   attendancePercentage: number;
+}
+
+// ── Platform stats (super admin) ──────────────────────────────────────────────
+export interface PlatformStats {
+  tenants: {
+    pending: number;
+    active: number;
+    suspended: number;
+    total: number;
+  };
 }

@@ -4,7 +4,7 @@ import { useSearchParams } from 'react-router-dom';
 import { Users, Search, ChevronLeft, ChevronRight, Eye, X } from 'lucide-react';
 import { format } from 'date-fns';
 
-import { registrationsApi } from '@/api/registrationsApi';
+import { useTenant } from '@/context/TenantContext';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { RegistrationDetailSheet } from '@/components/admin/RegistrationDetailSheet';
@@ -36,6 +36,7 @@ const ATTENDANCE_BADGE: Record<string, 'success' | 'secondary'> = {
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 export function RegistrationsPage() {
+  const { api } = useTenant();
   const [urlParams, setUrlParams] = useSearchParams();
   const eventIdFilter = urlParams.get('eventId') ?? '';
 
@@ -48,7 +49,7 @@ export function RegistrationsPage() {
   const { data, isLoading } = useQuery({
     queryKey: ['admin-registrations', page, activeTab, search, eventIdFilter],
     queryFn: () =>
-      registrationsApi.getAll({
+      api.registrations.getAll({
         page,
         limit: 15,
         status: activeTab || undefined,

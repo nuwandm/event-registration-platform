@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-import { dashboardApi } from '@/api/dashboardApi';
+import { useTenant } from '@/context/TenantContext';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -129,6 +129,7 @@ function ReportCard({
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 export function ReportsPage() {
+  const { api, orgSlug } = useTenant();
   const [fmt, setFmt] = useState<Format>('csv');
   const [eventId, setEventId] = useState<string>('all');
   const [regStatus, setRegStatus] = useState<RegistrationStatus>('all');
@@ -137,7 +138,7 @@ export function ReportsPage() {
 
   const { data: eventsRes } = useQuery({
     queryKey: ['dashboard-events'],
-    queryFn: () => dashboardApi.getEventOptions(),
+    queryFn: () => api.dashboard.getEventOptions(),
     staleTime: 5 * 60_000,
   });
 
@@ -165,7 +166,7 @@ export function ReportsPage() {
     try {
       const extra: Record<string, string> = {};
       if (regStatus !== 'all') extra.status = regStatus;
-      await triggerDownload(`/api/reports/registrations?${buildParams(extra)}`, buildFilename('registrations'));
+      await triggerDownload(`/api/${orgSlug}/admin/reports/registrations?${buildParams(extra)}`, buildFilename('registrations'));
       toast.success('Registrations report downloaded');
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Export failed');
@@ -177,7 +178,7 @@ export function ReportsPage() {
   const handleExportAttendance = async () => {
     setExportingAtt(true);
     try {
-      await triggerDownload(`/api/reports/attendance?${buildParams()}`, buildFilename('attendance'));
+      await triggerDownload(`/api/${orgSlug}/admin/reports/attendance?${buildParams()}`, buildFilename('attendance'));
       toast.success('Attendance report downloaded');
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Export failed');

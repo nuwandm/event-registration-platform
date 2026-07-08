@@ -25,7 +25,8 @@ export const authController = {
         return;
       }
 
-      const result = await authService.login(req.body);
+      const { email, password, orgSlug } = req.body as { email: string; password: string; orgSlug?: string };
+      const result = await authService.login({ email, password, orgSlug });
 
       const response: ApiResponse = {
         success: true,

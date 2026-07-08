@@ -10,8 +10,7 @@ import {
 import { format } from 'date-fns';
 
 import { registrationSchema, type RegistrationFormValues } from '@/schemas/registration';
-import { registrationsApi } from '@/api/registrationsApi';
-import { eventsApi } from '@/api/eventsApi';
+import { useTenant } from '@/context/TenantContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -113,12 +112,13 @@ function Field({ label, error, children, required }: { label: string; error?: st
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 export function RegisterPage() {
+  const { api, orgSlug } = useTenant();
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
 
   const { data: event, isLoading: eventLoading, isError } = useQuery({
-    queryKey: ['public-event', slug],
-    queryFn: () => eventsApi.getBySlug(slug!),
+    queryKey: ['public-event', orgSlug, slug],
+    queryFn: () => api.events.getBySlug(slug!),
     select: (res) => res.data.data?.event,
     enabled: !!slug,
   });
@@ -136,7 +136,7 @@ export function RegisterPage() {
 
   const { mutate, isPending } = useMutation({
     mutationFn: (data: RegistrationFormValues) =>
-      registrationsApi.submit(String(event!._id), {
+      api.registrations.submit(String(event!._id), {
         fullName: data.fullName,
         nic: data.nic,
         email: data.email,
@@ -148,7 +148,7 @@ export function RegisterPage() {
       }),
     onSuccess: (res) => {
       const { registrationId } = res.data.data!;
-      navigate(`/registration/success?id=${registrationId}`);
+      navigate(`/${orgSlug}/registration/success?id=${registrationId}`);
     },
     onError: (err: unknown) => {
       const msg =
@@ -173,7 +173,7 @@ export function RegisterPage() {
     return (
       <div className="max-w-3xl mx-auto px-4 py-16 text-center">
         <p className="text-slate-500 mb-4">Event not found or registration is closed.</p>
-        <Button asChild variant="outline"><Link to="/">Back to events</Link></Button>
+        <Button asChild variant="outline"><Link to={`/${orgSlug}`}>Back to events</Link></Button>
       </div>
     );
   }
@@ -190,14 +190,14 @@ export function RegisterPage() {
         </div>
         <h2 className="text-xl font-bold text-slate-800 mb-2">Registration Not Available</h2>
         <p className="text-slate-500 mb-6">Registration for this event is currently not open.</p>
-        <Button asChild variant="outline"><Link to="/">Browse Events</Link></Button>
+        <Button asChild variant="outline"><Link to={`/${orgSlug}`}>Browse Events</Link></Button>
       </div>
     );
   }
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
-      <Link to={`/events/${slug}`} className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-blue-600 mb-5 transition-colors">
+      <Link to={`/${orgSlug}/events/${slug}`} className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-blue-600 mb-5 transition-colors">
         <ArrowLeft className="w-4 h-4" />
         Back to event
       </Link>

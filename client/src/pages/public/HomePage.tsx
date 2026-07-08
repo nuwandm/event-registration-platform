@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { CalendarDays, MapPin, Users, ArrowRight, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 
-import { eventsApi } from '@/api/eventsApi';
+import { useTenant } from '@/context/TenantContext';
 import type { Event } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -11,7 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { StatusCheckWidget } from '@/components/public/StatusCheckWidget';
 
-function EventCard({ event }: { event: Event }) {
+function EventCard({ event, orgSlug }: { event: Event; orgSlug: string }) {
   const isRegistrationOpen =
     new Date() >= new Date(event.registrationOpenDate) &&
     new Date() <= new Date(event.registrationCloseDate);
@@ -85,7 +85,7 @@ function EventCard({ event }: { event: Event }) {
           </div>
           {isRegistrationOpen && (
             <Button asChild size="sm">
-              <Link to={`/events/${event.slug}/register`}>
+              <Link to={`/${orgSlug}/events/${event.slug}/register`}>
                 Register
                 <ArrowRight className="w-3.5 h-3.5 ml-1" />
               </Link>
@@ -112,9 +112,10 @@ function EventCardSkeleton() {
 }
 
 export function HomePage() {
+  const { api, orgSlug } = useTenant();
   const { data, isLoading } = useQuery({
-    queryKey: ['public-events'],
-    queryFn: () => eventsApi.getPublished(),
+    queryKey: ['public-events', orgSlug],
+    queryFn: () => api.events.getPublished(),
     select: (res) => res.data.data?.events ?? [],
   });
 
@@ -152,7 +153,7 @@ export function HomePage() {
         />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {data.map((event) => <EventCard key={event._id} event={event} />)}
+          {data.map((event) => <EventCard key={event._id} event={event} orgSlug={orgSlug} />)}
         </div>
       )}
     </div>

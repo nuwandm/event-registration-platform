@@ -40,20 +40,27 @@ const extractValidationErrors = (req: Request): Record<string, string> | null =>
   );
 };
 
+const requireTenant = (req: AuthRequest): string => {
+  if (!req.tenant) throw new AppError('Tenant context missing', 500);
+  return String(req.tenant._id);
+};
+
 export const eventController = {
   // Public
-  async getPublishedEvents(_req: Request, res: Response, next: NextFunction): Promise<void> {
+  async getPublishedEvents(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const events = await eventService.getPublishedEvents();
+      const tenantId = requireTenant(req);
+      const events = await eventService.getPublishedEvents(tenantId);
       res.json({ success: true, message: 'Events retrieved', data: { events } });
     } catch (error) {
       next(error);
     }
   },
 
-  async getPublicEventBySlug(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async getPublicEventBySlug(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const event = await eventService.getPublicEventBySlug(req.params.slug);
+      const tenantId = requireTenant(req);
+      const event = await eventService.getPublicEventBySlug(req.params.slug, tenantId);
       res.json({ success: true, message: 'Event retrieved', data: { event } });
     } catch (error) {
       next(error);
@@ -61,23 +68,29 @@ export const eventController = {
   },
 
   // Admin
-  async getAllEvents(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async getAllEvents(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
+      const tenantId = requireTenant(req);
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 10;
       const status = req.query.status as string | undefined;
       const search = req.query.search as string | undefined;
 
-      const result = await eventService.getAllEventsPaginated({ page, limit, status: status as 'draft' | 'published' | 'closed' | undefined, search });
+      const result = await eventService.getAllEventsPaginated({
+        page, limit, tenantId,
+        status: status as 'draft' | 'published' | 'closed' | undefined,
+        search,
+      });
       res.json({ success: true, message: 'Events retrieved', data: result });
     } catch (error) {
       next(error);
     }
   },
 
-  async getEventById(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async getEventById(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const event = await eventService.getEventById(req.params.id);
+      const tenantId = requireTenant(req);
+      const event = await eventService.getEventById(req.params.id, tenantId);
       res.json({ success: true, message: 'Event retrieved', data: { event } });
     } catch (error) {
       next(error);
@@ -92,8 +105,8 @@ export const eventController = {
         return;
       }
       if (!req.admin) throw new AppError('Unauthorized', 401);
+      const tenantId = requireTenant(req);
 
-      // bankDetails and bannerPosition may come as JSON strings from multipart form
       if (typeof req.body.bankDetails === 'string') {
         req.body.bankDetails = JSON.parse(req.body.bankDetails);
       }
@@ -101,7 +114,7 @@ export const eventController = {
         try { req.body.bannerPosition = JSON.parse(req.body.bannerPosition); } catch { delete req.body.bannerPosition; }
       }
 
-      const event = await eventService.createEvent(req.body, String(req.admin._id), req.file);
+      const event = await eventService.createEvent(req.body, tenantId, String(req.admin._id), req.file);
       res.status(201).json({ success: true, message: 'Event created', data: { event } });
     } catch (error) {
       next(error);
@@ -110,31 +123,34 @@ export const eventController = {
 
   async updateEvent(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
+      const tenantId = requireTenant(req);
       if (typeof req.body.bankDetails === 'string') {
         req.body.bankDetails = JSON.parse(req.body.bankDetails);
       }
       if (typeof req.body.bannerPosition === 'string') {
         try { req.body.bannerPosition = JSON.parse(req.body.bannerPosition); } catch { delete req.body.bannerPosition; }
       }
-      const event = await eventService.updateEvent(req.params.id, req.body, req.file);
+      const event = await eventService.updateEvent(req.params.id, tenantId, req.body, req.file);
       res.json({ success: true, message: 'Event updated', data: { event } });
     } catch (error) {
       next(error);
     }
   },
 
-  async deleteEvent(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async deleteEvent(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      await eventService.deleteEvent(req.params.id);
+      const tenantId = requireTenant(req);
+      await eventService.deleteEvent(req.params.id, tenantId);
       res.json({ success: true, message: 'Event deleted' });
     } catch (error) {
       next(error);
     }
   },
 
-  async toggleAdmission(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async toggleAdmission(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const event = await eventService.toggleAdmission(req.params.id);
+      const tenantId = requireTenant(req);
+      const event = await eventService.toggleAdmission(req.params.id, tenantId);
       res.json({
         success: true,
         message: event.admissionOpen ? 'Admission opened' : 'Admission closed',

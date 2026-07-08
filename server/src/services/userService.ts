@@ -17,14 +17,14 @@ export interface UpdateUserDTO {
 }
 
 export const userService = {
-  async listUsers(): Promise<IAdmin[]> {
-    return Admin.find({ role: 'staff' })
+  async listUsers(tenantId: string): Promise<IAdmin[]> {
+    return Admin.find({ role: 'staff', tenantId })
       .populate('assignedEvents', 'name slug eventDate')
       .select('-password')
       .sort({ createdAt: -1 });
   },
 
-  async createUser(dto: CreateUserDTO): Promise<IAdmin> {
+  async createUser(tenantId: string, dto: CreateUserDTO): Promise<IAdmin> {
     const existing = await Admin.findOne({ email: dto.email.toLowerCase() });
     if (existing) throw new AppError('Email already in use', 409);
 
@@ -33,6 +33,7 @@ export const userService = {
       email: dto.email,
       password: dto.password,
       role: 'staff',
+      tenantId: new mongoose.Types.ObjectId(tenantId),
       assignedEvents: dto.assignedEvents.map((id) => new mongoose.Types.ObjectId(id)),
     });
 
@@ -41,8 +42,8 @@ export const userService = {
       .select('-password') as Promise<IAdmin>;
   },
 
-  async updateUser(id: string, dto: UpdateUserDTO): Promise<IAdmin> {
-    const user = await Admin.findOne({ _id: id, role: 'staff' });
+  async updateUser(id: string, tenantId: string, dto: UpdateUserDTO): Promise<IAdmin> {
+    const user = await Admin.findOne({ _id: id, role: 'staff', tenantId });
     if (!user) throw new AppError('User not found', 404);
 
     if (dto.name) user.name = dto.name;
@@ -63,26 +64,24 @@ export const userService = {
       .select('-password') as Promise<IAdmin>;
   },
 
-  async deleteUser(id: string): Promise<void> {
-    const user = await Admin.findOne({ _id: id, role: 'staff' });
+  async deleteUser(id: string, tenantId: string): Promise<void> {
+    const user = await Admin.findOne({ _id: id, role: 'staff', tenantId });
     if (!user) throw new AppError('User not found', 404);
     await user.deleteOne();
   },
 
-  async getStaffForEvent(eventId: string): Promise<IAdmin[]> {
-    return Admin.find({ role: 'staff', assignedEvents: new mongoose.Types.ObjectId(eventId) })
+  async getStaffForEvent(eventId: string, tenantId: string): Promise<IAdmin[]> {
+    return Admin.find({ role: 'staff', tenantId, assignedEvents: new mongoose.Types.ObjectId(eventId) })
       .select('-password')
       .sort({ name: 1 });
   },
 
-  async setEventStaff(eventId: string, staffIds: string[]): Promise<void> {
+  async setEventStaff(eventId: string, staffIds: string[], tenantId: string): Promise<void> {
     const oid = new mongoose.Types.ObjectId(eventId);
-    // Remove event from all current staff
-    await Admin.updateMany({ role: 'staff', assignedEvents: oid }, { $pull: { assignedEvents: oid } });
-    // Add event to selected staff
+    await Admin.updateMany({ role: 'staff', tenantId, assignedEvents: oid }, { $pull: { assignedEvents: oid } });
     if (staffIds.length > 0) {
       await Admin.updateMany(
-        { role: 'staff', _id: { $in: staffIds.map((id) => new mongoose.Types.ObjectId(id)) } },
+        { role: 'staff', tenantId, _id: { $in: staffIds.map((id) => new mongoose.Types.ObjectId(id)) } },
         { $addToSet: { assignedEvents: oid } }
       );
     }

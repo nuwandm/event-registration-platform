@@ -10,7 +10,7 @@ import {
 } from 'recharts';
 import { format } from 'date-fns';
 
-import { dashboardApi } from '@/api/dashboardApi';
+import { useTenant } from '@/context/TenantContext';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -157,26 +157,27 @@ type DayOption = typeof DAY_OPTIONS[number];
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 export function DashboardPage() {
+  const { api } = useTenant();
   const [days, setDays] = useState<DayOption>(30);
   const [eventFilter, setEventFilter] = useState<string>('all');
 
   const { data: statsRes, isLoading: statsLoading } = useQuery({
     queryKey: ['dashboard-stats'],
-    queryFn: () => dashboardApi.getStats(),
+    queryFn: () => api.dashboard.getStats(),
     staleTime: 60_000,
     refetchInterval: 60_000,
   });
 
   const { data: chartRes, isLoading: chartLoading } = useQuery({
     queryKey: ['dashboard-chart', days, eventFilter],
-    queryFn: () => dashboardApi.getChartData(days, eventFilter),
+    queryFn: () => api.dashboard.getChartData(days, eventFilter),
     staleTime: 60_000,
     refetchInterval: 60_000,
   });
 
   const { data: eventsRes } = useQuery({
     queryKey: ['dashboard-events'],
-    queryFn: () => dashboardApi.getEventOptions(),
+    queryFn: () => api.dashboard.getEventOptions(),
     staleTime: 5 * 60_000,
   });
 

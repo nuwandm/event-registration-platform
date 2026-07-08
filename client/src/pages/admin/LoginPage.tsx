@@ -1,42 +1,47 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { useMutation } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Eye, EyeOff, LogIn } from 'lucide-react';
 import { useState } from 'react';
 
-import { loginSchema, type LoginFormValues } from '@/schemas/auth';
 import { authApi } from '@/api/authApi';
 import { useAuthStore } from '@/store/authStore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { cn } from '@/lib/utils';
+
+const schema = z.object({
+  email: z.string().email('Invalid email'),
+  password: z.string().min(1, 'Password required'),
+});
+
+type FormValues = z.infer<typeof schema>;
 
 export function LoginPage() {
   const navigate = useNavigate();
+  const { orgSlug } = useParams<{ orgSlug: string }>();
   const setAuth = useAuthStore((s) => s.setAuth);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const [showPassword, setShowPassword] = useState(false);
 
   if (isAuthenticated) {
-    navigate('/admin', { replace: true });
+    navigate(`/${orgSlug}/admin`, { replace: true });
   }
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<LoginFormValues>({
-    resolver: zodResolver(loginSchema),
+  const { register, handleSubmit, formState: { errors } } = useForm<FormValues>({
+    resolver: zodResolver(schema),
   });
 
   const { mutate, isPending, error } = useMutation({
-    mutationFn: (data: LoginFormValues) => authApi.login(data),
+    mutationFn: (data: FormValues) => authApi.login({ ...data, orgSlug }),
     onSuccess: (res) => {
       const { token, admin } = res.data.data!;
-      setAuth(token, admin);
-      navigate('/admin');
+      setAuth(token, admin, orgSlug);
+      navigate(`/${orgSlug}/admin`);
     },
   });
 
@@ -48,7 +53,6 @@ export function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 p-4">
       <div className="w-full max-w-md">
-        {/* Logo */}
         <div className="text-center mb-8">
           <img
             src="/Event Hub.png"
@@ -56,9 +60,11 @@ export function LoginPage() {
             className="h-24 w-auto object-contain mx-auto brightness-0 invert drop-shadow-lg"
           />
           <p className="text-slate-400 text-sm mt-2">Admin Portal</p>
+          {orgSlug && (
+            <p className="text-blue-400 text-xs mt-1 font-mono">/{orgSlug}</p>
+          )}
         </div>
 
-        {/* Card */}
         <div className="bg-white rounded-2xl shadow-2xl p-8">
           <h2 className="text-xl font-semibold text-slate-800 mb-1">Sign in</h2>
           <p className="text-slate-500 text-sm mb-6">Enter your credentials to continue</p>
@@ -80,9 +86,7 @@ export function LoginPage() {
                 {...register('email')}
                 className={errors.email ? 'border-red-400 focus-visible:ring-red-400' : ''}
               />
-              {errors.email && (
-                <p className="text-xs text-red-500">{errors.email.message}</p>
-              )}
+              {errors.email && <p className="text-xs text-red-500">{errors.email.message}</p>}
             </div>
 
             <div className="space-y-1.5">
@@ -94,10 +98,7 @@ export function LoginPage() {
                   placeholder="Enter your password"
                   autoComplete="current-password"
                   {...register('password')}
-                  className={cn(
-                    'pr-10',
-                    errors.password ? 'border-red-400 focus-visible:ring-red-400' : ''
-                  )}
+                  className={cn('pr-10', errors.password ? 'border-red-400 focus-visible:ring-red-400' : '')}
                 />
                 <button
                   type="button"
@@ -108,9 +109,7 @@ export function LoginPage() {
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
-              {errors.password && (
-                <p className="text-xs text-red-500">{errors.password.message}</p>
-              )}
+              {errors.password && <p className="text-xs text-red-500">{errors.password.message}</p>}
             </div>
 
             <Button type="submit" className="w-full mt-2" disabled={isPending}>
@@ -135,8 +134,4 @@ export function LoginPage() {
       </div>
     </div>
   );
-}
-
-function cn(...classes: (string | false | undefined)[]) {
-  return classes.filter(Boolean).join(' ');
 }

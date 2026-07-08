@@ -10,9 +10,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 
-import { eventsApi } from '@/api/eventsApi';
-import { registrationsApi } from '@/api/registrationsApi';
-import { usersApi } from '@/api/usersApi';
+import { useTenant } from '@/context/TenantContext';
 import type { Registration, StaffUser } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -52,6 +50,7 @@ const STATUS_REG_TABS = [
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 export function AdminEventDetailPage() {
+  const { api, orgSlug } = useTenant();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [urlParams] = useSearchParams();
@@ -65,13 +64,13 @@ export function AdminEventDetailPage() {
   // ── Event ──────────────────────────────────────────────────────────────────
   const { data: event, isLoading } = useQuery({
     queryKey: ['admin-event-detail', id],
-    queryFn: () => eventsApi.getById(id!),
+    queryFn: () => api.events.getById(id!),
     select: (res) => res.data.data?.event,
     enabled: !!id,
   });
 
   const admissionMutation = useMutation({
-    mutationFn: () => eventsApi.toggleAdmission(id!),
+    mutationFn: () => api.events.toggleAdmission(id!),
     onSuccess: (res) => {
       const ev = res.data.data?.event;
       toast.success(ev?.admissionOpen ? 'Admission opened — QR scanning is now live' : 'Admission closed');
@@ -82,10 +81,10 @@ export function AdminEventDetailPage() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: () => eventsApi.delete(id!),
+    mutationFn: () => api.events.delete(id!),
     onSuccess: () => {
       toast.success('Event deleted');
-      navigate('/admin/events');
+      navigate(`/${orgSlug}/admin/events`);
     },
     onError: () => toast.error('Failed to delete event'),
   });
@@ -99,7 +98,7 @@ export function AdminEventDetailPage() {
   );
 
   if (!event) return (
-    <div className="p-8 text-center text-slate-500">Event not found. <Link to="/admin/events" className="text-blue-600 hover:underline">Back to events</Link></div>
+    <div className="p-8 text-center text-slate-500">Event not found. <Link to={`/${orgSlug}/admin/events`} className="text-blue-600 hover:underline">Back to events</Link></div>
   );
 
   const isRegistrationOpen = new Date() >= new Date(event.registrationOpenDate) && new Date() <= new Date(event.registrationCloseDate);
@@ -109,7 +108,7 @@ export function AdminEventDetailPage() {
 
       {/* Top bar */}
       <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
-        <button onClick={() => navigate('/admin/events')} className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 transition-colors">
+        <button onClick={() => navigate(`/${orgSlug}/admin/events`)} className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 transition-colors">
           <ArrowLeft className="w-4 h-4" /> Back to Events
         </button>
         <div className="flex items-center gap-2 flex-wrap">
@@ -317,7 +316,7 @@ function ParticipantsTab({ eventId }: { eventId: string }) {
 
   const { data, isLoading } = useQuery({
     queryKey: ['event-registrations', eventId, page, activeTab, search],
-    queryFn: () => registrationsApi.getAll({ page, limit: 15, status: activeTab || undefined, search: search || undefined, eventId }),
+    queryFn: () => api.registrations.getAll({ page, limit: 15, status: activeTab || undefined, search: search || undefined, eventId }),
     select: (res) => res.data.data,
   });
 
@@ -327,7 +326,7 @@ function ParticipantsTab({ eventId }: { eventId: string }) {
   };
 
   const deleteMutation = useMutation({
-    mutationFn: () => registrationsApi.remove(deleteTarget!._id, deleteReason),
+    mutationFn: () => api.registrations.remove(deleteTarget!._id, deleteReason),
     onSuccess: () => {
       toast.success('Participant removed');
       setDeleteTarget(null);
@@ -341,7 +340,7 @@ function ParticipantsTab({ eventId }: { eventId: string }) {
   });
 
   const editMutation = useMutation({
-    mutationFn: () => registrationsApi.update(editTarget!._id, {
+    mutationFn: () => api.registrations.update(editTarget!._id, {
       status: editStatus || undefined,
       attendanceStatus: editAttendance || undefined,
       adminRemarks: editRemarks || undefined,
@@ -600,12 +599,12 @@ function StaffTab({ eventId, eventName }: { eventId: string; eventName: string }
 
   const { data: allStaffData, isLoading } = useQuery({
     queryKey: ['staff-users'],
-    queryFn: () => usersApi.list(),
+    queryFn: () => api.users.list(),
   });
 
   const { data: assignedData } = useQuery({
     queryKey: ['event-staff', eventId],
-    queryFn: () => usersApi.getEventStaff(eventId),
+    queryFn: () => api.users.getEventStaff(eventId),
   });
 
   const allStaff: StaffUser[] = allStaffData?.data.data?.users ?? [];
@@ -617,7 +616,7 @@ function StaffTab({ eventId, eventName }: { eventId: string; eventName: string }
   }
 
   const saveMutation = useMutation({
-    mutationFn: () => usersApi.setEventStaff(eventId, [...selected]),
+    mutationFn: () => api.users.setEventStaff(eventId, [...selected]),
     onSuccess: () => {
       toast.success('Staff updated');
       qc.invalidateQueries({ queryKey: ['event-staff', eventId] });
@@ -650,7 +649,7 @@ function StaffTab({ eventId, eventName }: { eventId: string; eventName: string }
         ) : allStaff.length === 0 ? (
           <div className="py-12 text-center text-slate-400 text-sm">
             <UserCog className="w-8 h-8 mx-auto mb-2 opacity-30" />
-            No staff users yet. Create staff from <Link to="/admin/users" className="text-blue-600 hover:underline">User Management</Link>.
+            No staff users yet. Create staff from <Link to={`/${orgSlug}/admin/users`} className="text-blue-600 hover:underline">User Management</Link>.
           </div>
         ) : (
           <div className="divide-y divide-slate-50">

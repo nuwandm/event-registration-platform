@@ -26,7 +26,7 @@ export interface SubmitRegistrationResult {
   status: string;
 }
 
-export const registrationsApi = {
+export const registrationsApi = (orgSlug: string) => ({
   // Public
   submit: (eventId: string, payload: SubmitRegistrationPayload) => {
     const form = new FormData();
@@ -38,36 +38,35 @@ export const registrationsApi = {
     if (payload.organization) form.append('organization', payload.organization);
     if (payload.designation) form.append('designation', payload.designation);
     form.append('receipt', payload.receipt);
-
     return api.post<ApiResponse<SubmitRegistrationResult>>(
-      `/registrations/${eventId}`,
+      `/${orgSlug}/registrations/${eventId}`,
       form,
       { headers: { 'Content-Type': 'multipart/form-data' } }
     );
   },
 
   getStatus: (id: string) =>
-    api.get<ApiResponse<{ registration: Registration }>>(`/registrations/status/${id}`),
+    api.get<ApiResponse<{ registration: Registration }>>(`/${orgSlug}/registrations/status/${id}`),
 
   checkByNumber: (registrationNumber: string) =>
-    api.get<ApiResponse<{ registration: Registration }>>(`/registrations/check/${registrationNumber}`),
+    api.get<ApiResponse<{ registration: Registration }>>(`/${orgSlug}/registrations/check/${registrationNumber}`),
 
   // Admin
   getAll: (filters: RegistrationFilters = {}) =>
-    api.get<ApiResponse<PaginatedResponse<Registration>>>('/admin/registrations', { params: filters }),
+    api.get<ApiResponse<PaginatedResponse<Registration>>>(`/${orgSlug}/admin/registrations`, { params: filters }),
 
   getById: (id: string) =>
-    api.get<ApiResponse<{ registration: Registration }>>(`/admin/registrations/${id}`),
+    api.get<ApiResponse<{ registration: Registration }>>(`/${orgSlug}/admin/registrations/${id}`),
 
   approve: (id: string, remarks?: string) =>
-    api.put<ApiResponse<{ registration: Registration }>>(`/admin/registrations/${id}/approve`, { remarks }),
+    api.put<ApiResponse<{ registration: Registration }>>(`/${orgSlug}/admin/registrations/${id}/approve`, { remarks }),
 
   reject: (id: string, remarks: string) =>
-    api.put<ApiResponse<{ registration: Registration }>>(`/admin/registrations/${id}/reject`, { remarks }),
+    api.put<ApiResponse<{ registration: Registration }>>(`/${orgSlug}/admin/registrations/${id}/reject`, { remarks }),
 
   update: (id: string, payload: { status?: string; attendanceStatus?: string; adminRemarks?: string }) =>
-    api.patch<ApiResponse<{ registration: Registration }>>(`/admin/registrations/${id}`, payload),
+    api.patch<ApiResponse<{ registration: Registration }>>(`/${orgSlug}/admin/registrations/${id}`, payload),
 
   remove: (id: string, reason: string) =>
-    api.delete<ApiResponse>(`/admin/registrations/${id}`, { data: { reason } }),
-};
+    api.delete<ApiResponse>(`/${orgSlug}/admin/registrations/${id}`, { data: { reason } }),
+});

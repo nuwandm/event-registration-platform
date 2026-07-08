@@ -1,34 +1,33 @@
-import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
+import { Outlet, Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
-  LayoutDashboard,
-  CalendarDays,
-  Users,
-  ScanLine,
-  FileBarChart2,
-  LogOut,
-  Menu,
-  X,
-  UserCog,
+  LayoutDashboard, CalendarDays, Users, ScanLine,
+  FileBarChart2, LogOut, Menu, X, UserCog, Palette,
 } from 'lucide-react';
 import { useState } from 'react';
 import { useAuthStore } from '@/store/authStore';
+import { useTenant } from '@/context/TenantContext';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-
-const allNavItems = [
-  { to: '/admin', label: 'Dashboard', icon: LayoutDashboard, exact: true, roles: ['super_admin', 'admin'] },
-  { to: '/admin/events', label: 'Events', icon: CalendarDays, roles: ['super_admin', 'admin'] },
-  { to: '/admin/registrations', label: 'Registrations', icon: Users, roles: ['super_admin', 'admin'] },
-  { to: '/admin/attendance', label: 'Attendance Scanner', icon: ScanLine, roles: ['super_admin', 'admin', 'staff'] },
-  { to: '/admin/reports', label: 'Reports', icon: FileBarChart2, roles: ['super_admin', 'admin'] },
-  { to: '/admin/users', label: 'User Management', icon: UserCog, roles: ['super_admin'] },
-];
 
 export function AdminLayout() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
+  const { orgSlug } = useParams<{ orgSlug: string }>();
   const { admin, logout } = useAuthStore();
+  const { tenant } = useTenant();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const base = `/${orgSlug}/admin`;
+
+  const allNavItems = [
+    { to: base, label: 'Dashboard', icon: LayoutDashboard, exact: true, roles: ['org_admin'] },
+    { to: `${base}/events`, label: 'Events', icon: CalendarDays, roles: ['org_admin'] },
+    { to: `${base}/registrations`, label: 'Registrations', icon: Users, roles: ['org_admin'] },
+    { to: `${base}/attendance`, label: 'Attendance Scanner', icon: ScanLine, roles: ['org_admin', 'staff'] },
+    { to: `${base}/reports`, label: 'Reports', icon: FileBarChart2, roles: ['org_admin'] },
+    { to: `${base}/users`, label: 'User Management', icon: UserCog, roles: ['org_admin'] },
+    { to: `${base}/branding`, label: 'Branding', icon: Palette, roles: ['org_admin'] },
+  ];
 
   const navItems = allNavItems.filter((item) =>
     admin?.role ? item.roles.includes(admin.role) : false
@@ -36,7 +35,7 @@ export function AdminLayout() {
 
   const handleLogout = () => {
     logout();
-    navigate('/admin/login');
+    navigate(`/${orgSlug}/admin/login`);
   };
 
   const isActive = (to: string, exact?: boolean) =>
@@ -45,8 +44,15 @@ export function AdminLayout() {
   const SidebarContent = () => (
     <nav className="flex flex-col h-full">
       <div className="px-6 py-5 border-b border-slate-700">
-        <Link to="/" className="flex items-center">
-          <img src="/Event Hub.png" alt="EventHub" className="h-9 w-auto object-contain brightness-0 invert" />
+        <Link to={`/${orgSlug}`} className="flex items-center gap-3">
+          {tenant?.logoUrl ? (
+            <img src={tenant.logoUrl} alt={tenant.name} className="h-8 w-auto object-contain" />
+          ) : (
+            <img src="/Event Hub.png" alt="EventHub" className="h-8 w-auto object-contain brightness-0 invert" />
+          )}
+          {tenant?.name && (
+            <span className="text-white text-sm font-semibold truncate max-w-[120px]">{tenant.name}</span>
+          )}
         </Link>
         <p className="text-xs text-slate-400 mt-1">
           {admin?.role === 'staff' ? 'Staff Panel' : 'Admin Panel'}
@@ -92,12 +98,10 @@ export function AdminLayout() {
 
   return (
     <div className="flex h-screen bg-slate-100 overflow-hidden">
-      {/* Desktop sidebar */}
       <aside className="hidden lg:flex lg:w-64 bg-slate-800 flex-col shrink-0">
         <SidebarContent />
       </aside>
 
-      {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div className="absolute inset-0 bg-black/50" onClick={() => setSidebarOpen(false)} />
@@ -107,9 +111,7 @@ export function AdminLayout() {
         </div>
       )}
 
-      {/* Main content */}
       <div className="flex flex-col flex-1 overflow-hidden">
-        {/* Top bar */}
         <header className="h-14 bg-white border-b border-slate-200 flex items-center px-4 gap-3 shrink-0">
           <button
             className="lg:hidden p-1.5 rounded-md text-slate-500 hover:bg-slate-100"
@@ -125,7 +127,6 @@ export function AdminLayout() {
           </span>
         </header>
 
-        {/* Page content */}
         <main className="flex-1 overflow-y-auto p-4 sm:p-6">
           <Outlet />
         </main>

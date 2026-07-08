@@ -22,7 +22,8 @@ export interface ChartPoint {
 }
 
 export const dashboardService = {
-  async getStats(): Promise<DashboardStats> {
+  async getStats(tenantId: string): Promise<DashboardStats> {
+    const tid = new mongoose.Types.ObjectId(tenantId);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -33,13 +34,14 @@ export const dashboardService = {
       totalAttended,
       todayAttendance,
     ] = await Promise.all([
-      Event.countDocuments(),
-      Event.countDocuments({ status: 'published' }),
+      Event.countDocuments({ tenantId: tid }),
+      Event.countDocuments({ tenantId: tid, status: 'published' }),
       Registration.aggregate([
+        { $match: { tenantId: tid } },
         { $group: { _id: '$status', count: { $sum: 1 } } },
       ]),
-      Registration.countDocuments({ attendanceStatus: 'attended' }),
-      AttendanceLog.countDocuments({ status: 'success', scannedAt: { $gte: today } }),
+      Registration.countDocuments({ tenantId: tid, attendanceStatus: 'attended' }),
+      AttendanceLog.countDocuments({ tenantId: tid, status: 'success', scannedAt: { $gte: today } }),
     ]);
 
     const counts = regCounts.reduce(
@@ -66,13 +68,14 @@ export const dashboardService = {
     };
   },
 
-  async getChartData(days = 30, eventId?: string): Promise<ChartPoint[]> {
+  async getChartData(tenantId: string, days = 30, eventId?: string): Promise<ChartPoint[]> {
+    const tid = new mongoose.Types.ObjectId(tenantId);
     const from = new Date();
     from.setDate(from.getDate() - days + 1);
     from.setHours(0, 0, 0, 0);
 
-    const regMatch: Record<string, unknown> = { createdAt: { $gte: from } };
-    const attMatch: Record<string, unknown> = { status: 'success', scannedAt: { $gte: from } };
+    const regMatch: Record<string, unknown> = { tenantId: tid, createdAt: { $gte: from } };
+    const attMatch: Record<string, unknown> = { tenantId: tid, status: 'success', scannedAt: { $gte: from } };
 
     if (eventId && eventId !== 'all') {
       regMatch.eventId = new mongoose.Types.ObjectId(eventId);
@@ -82,47 +85,31 @@ export const dashboardService = {
     const [regData, attData] = await Promise.all([
       Registration.aggregate([
         { $match: regMatch },
-        {
-          $group: {
-            _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
-            count: { $sum: 1 },
-          },
-        },
+        { $group: { _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } }, count: { $sum: 1 } } },
         { $sort: { _id: 1 } },
       ]),
       AttendanceLog.aggregate([
         { $match: attMatch },
-        {
-          $group: {
-            _id: { $dateToString: { format: '%Y-%m-%d', date: '$scannedAt' } },
-            count: { $sum: 1 },
-          },
-        },
+        { $group: { _id: { $dateToString: { format: '%Y-%m-%d', date: '$scannedAt' } }, count: { $sum: 1 } } },
         { $sort: { _id: 1 } },
       ]),
     ]);
 
-    // Build a map for O(1) lookup
     const regMap = new Map(regData.map((d: { _id: string; count: number }) => [d._id, d.count]));
     const attMap = new Map(attData.map((d: { _id: string; count: number }) => [d._id, d.count]));
 
-    // Fill every day in the range
     const points: ChartPoint[] = [];
     for (let i = 0; i < days; i++) {
       const d = new Date(from);
       d.setDate(from.getDate() + i);
       const key = d.toISOString().slice(0, 10);
-      points.push({
-        date: key,
-        registrations: regMap.get(key) ?? 0,
-        attendance: attMap.get(key) ?? 0,
-      });
+      points.push({ date: key, registrations: regMap.get(key) ?? 0, attendance: attMap.get(key) ?? 0 });
     }
 
     return points;
   },
 
-  async getEventOptions() {
-    return Event.find({}, '_id name slug status').sort({ createdAt: -1 }).lean();
+  async getEventOptions(tenantId: string) {
+    return Event.find({ tenantId }, '_id name slug status').sort({ createdAt: -1 }).lean();
   },
 };

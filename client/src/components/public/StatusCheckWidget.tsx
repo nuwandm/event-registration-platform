@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Hash, Search, Ticket, ChevronDown } from 'lucide-react';
 
+import { useTenant } from '@/context/TenantContext';
 import { Button } from '@/components/ui/button';
 
 /* ── Floating CTA pill ───────────────────────────────────────────────────── */
@@ -58,6 +59,7 @@ function FloatingTracker({ onClick }: { onClick: () => void }) {
 
 /* ── Main widget ─────────────────────────────────────────────────────────── */
 export function StatusCheckWidget() {
+  const { orgSlug } = useTenant();
   const [refNumber, setRefNumber] = useState('');
   const navigate = useNavigate();
   const sectionRef = useRef<HTMLDivElement>(null);
@@ -73,7 +75,7 @@ export function StatusCheckWidget() {
     e.preventDefault();
     const trimmed = refNumber.trim().toUpperCase();
     if (!trimmed) return;
-    navigate(`/registration/status/${trimmed}`);
+    navigate(`/${orgSlug}/registration/status/${trimmed}`);
   };
 
   return (

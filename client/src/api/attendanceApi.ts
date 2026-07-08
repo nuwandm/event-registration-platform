@@ -28,10 +28,10 @@ export interface ScanResult {
   event?: ScanEvent;
 }
 
-export const attendanceApi = {
+export const attendanceApi = (orgSlug: string) => ({
   scan: (qrData: string, eventId?: string) =>
-    api.post<ApiResponse<ScanResult>>('/admin/attendance/scan', { qrData, eventId }),
+    api.post<ApiResponse<ScanResult>>(`/${orgSlug}/admin/attendance/scan`, { qrData, eventId }),
 
   getList: (eventId: string) =>
-    api.get<ApiResponse<{ logs: unknown[] }>>(`/admin/attendance/${eventId}`),
-};
+    api.get<ApiResponse<{ logs: unknown[] }>>(`/${orgSlug}/admin/attendance/${eventId}`),
+});

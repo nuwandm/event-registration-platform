@@ -3,18 +3,19 @@ import { useQuery } from '@tanstack/react-query';
 import { Link, useSearchParams } from 'react-router-dom';
 import { CheckCircle2, Clock, CalendarDays, Copy, Check, BookmarkCheck } from 'lucide-react';
 
-import { registrationsApi } from '@/api/registrationsApi';
+import { useTenant } from '@/context/TenantContext';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export function RegistrationSuccessPage() {
+  const { api, orgSlug } = useTenant();
   const [params] = useSearchParams();
   const id = params.get('id');
   const [copied, setCopied] = useState(false);
 
   const { data: registration, isLoading } = useQuery({
     queryKey: ['registration-status', id],
-    queryFn: () => registrationsApi.getStatus(id!),
+    queryFn: () => api.registrations.getStatus(id!),
     select: (res) => res.data.data?.registration,
     enabled: !!id,
   });
@@ -118,7 +119,7 @@ export function RegistrationSuccessPage() {
         {/* Actions */}
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Button asChild variant="outline">
-            <Link to="/">
+            <Link to={`/${orgSlug}`}>
               <CalendarDays className="w-4 h-4 mr-1.5" />
               Browse More Events
             </Link>

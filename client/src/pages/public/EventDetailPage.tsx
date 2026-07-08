@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { CalendarDays, MapPin, Users, CreditCard, Building2, ArrowLeft, ArrowRight } from 'lucide-react';
 import { format } from 'date-fns';
 
-import { eventsApi } from '@/api/eventsApi';
+import { useTenant } from '@/context/TenantContext';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -11,11 +11,12 @@ import { Separator } from '@/components/ui/separator';
 import { StatusCheckWidget } from '@/components/public/StatusCheckWidget';
 
 export function EventDetailPage() {
+  const { api, orgSlug } = useTenant();
   const { slug } = useParams<{ slug: string }>();
 
   const { data: event, isLoading, isError } = useQuery({
-    queryKey: ['public-event', slug],
-    queryFn: () => eventsApi.getBySlug(slug!),
+    queryKey: ['public-event', orgSlug, slug],
+    queryFn: () => api.events.getBySlug(slug!),
     select: (res) => res.data.data?.event,
     enabled: !!slug,
   });
@@ -35,7 +36,7 @@ export function EventDetailPage() {
     return (
       <div className="max-w-3xl mx-auto px-4 py-16 text-center">
         <p className="text-slate-500 mb-4">Event not found or no longer available.</p>
-        <Button asChild variant="outline"><Link to="/">Back to events</Link></Button>
+        <Button asChild variant="outline"><Link to={`/${orgSlug}`}>Back to events</Link></Button>
       </div>
     );
   }
@@ -46,7 +47,7 @@ export function EventDetailPage() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-10">
-      <Link to="/" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-blue-600 mb-6 transition-colors">
+      <Link to={`/${orgSlug}`} className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-blue-600 mb-6 transition-colors">
         <ArrowLeft className="w-4 h-4" />
         Back to events
       </Link>
@@ -123,7 +124,7 @@ export function EventDetailPage() {
       {/* CTA — always full width */}
       {isRegistrationOpen ? (
         <Button asChild size="lg" className="w-full">
-          <Link to={`/events/${event.slug}/register`}>
+          <Link to={`/${orgSlug}/events/${event.slug}/register`}>
             Register for this Event
             <ArrowRight className="w-4 h-4 ml-2" />
           </Link>

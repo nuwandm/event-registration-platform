@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 
-import { registrationsApi } from '@/api/registrationsApi';
+import { useTenant } from '@/context/TenantContext';
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
 } from '@/components/ui/sheet';
@@ -46,6 +46,7 @@ function InfoRow({ icon: Icon, label, value }: { icon: React.ElementType; label:
 }
 
 export function RegistrationDetailSheet({ registrationId, onClose }: RegistrationDetailSheetProps) {
+  const { api } = useTenant();
   const queryClient = useQueryClient();
   const [rejectOpen, setRejectOpen] = useState(false);
   const [remarks, setRemarks] = useState('');
@@ -54,7 +55,7 @@ export function RegistrationDetailSheet({ registrationId, onClose }: Registratio
 
   const { data: registration, isLoading } = useQuery({
     queryKey: ['admin-registration', registrationId],
-    queryFn: () => registrationsApi.getById(registrationId!),
+    queryFn: () => api.registrations.getById(registrationId!),
     select: (res) => res.data.data?.registration,
     enabled: !!registrationId,
   });
@@ -65,7 +66,7 @@ export function RegistrationDetailSheet({ registrationId, onClose }: Registratio
   };
 
   const approveMutation = useMutation({
-    mutationFn: () => registrationsApi.approve(registrationId!, approveRemarks || undefined),
+    mutationFn: () => api.registrations.approve(registrationId!, approveRemarks || undefined),
     onSuccess: () => {
       toast.success('Registration approved — QR code generated');
       invalidate();
@@ -79,7 +80,7 @@ export function RegistrationDetailSheet({ registrationId, onClose }: Registratio
   });
 
   const rejectMutation = useMutation({
-    mutationFn: () => registrationsApi.reject(registrationId!, remarks),
+    mutationFn: () => api.registrations.reject(registrationId!, remarks),
     onSuccess: () => {
       toast.success('Registration rejected');
       invalidate();

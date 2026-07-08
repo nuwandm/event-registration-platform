@@ -8,8 +8,8 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 
-import { usersApi, type CreateUserPayload, type UpdateUserPayload } from '@/api/usersApi';
-import { eventsApi } from '@/api/eventsApi';
+import { type CreateUserPayload, type UpdateUserPayload } from '@/api/usersApi';
+import { useTenant } from '@/context/TenantContext';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -81,15 +81,13 @@ function EventMultiSelect({
 
 // ── Dialog ────────────────────────────────────────────────────────────────────
 function UserDialog({
-  mode,
-  user,
-  events,
-  onClose,
+  mode, user, events, onClose, api,
 }: {
   mode: 'create' | 'edit';
   user?: StaffUser;
   events: Event[];
   onClose: () => void;
+  api: ReturnType<typeof useTenant>['api'];
 }) {
   const qc = useQueryClient();
   const [showPassword, setShowPassword] = useState(false);
@@ -112,12 +110,12 @@ function UserDialog({
   });
 
   const createMutation = useMutation({
-    mutationFn: (data: CreateUserPayload) => usersApi.create(data),
+    mutationFn: (data: CreateUserPayload) => api.users.create(data),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['staff-users'] }); onClose(); },
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data: UpdateUserPayload) => usersApi.update(user!._id, data),
+    mutationFn: (data: UpdateUserPayload) => api.users.update(user!._id, data),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['staff-users'] }); onClose(); },
   });
 
@@ -225,21 +223,22 @@ function UserDialog({
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 export function UsersPage() {
+  const { api } = useTenant();
   const [dialog, setDialog] = useState<{ mode: 'create' | 'edit'; user?: StaffUser } | null>(null);
   const qc = useQueryClient();
 
   const { data: usersData, isLoading: usersLoading } = useQuery({
     queryKey: ['staff-users'],
-    queryFn: () => usersApi.list(),
+    queryFn: () => api.users.list(),
   });
 
   const { data: eventsData } = useQuery({
     queryKey: ['all-events'],
-    queryFn: () => eventsApi.getAll({ limit: 100 }),
+    queryFn: () => api.events.getAll({ limit: 100 }),
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => usersApi.remove(id),
+    mutationFn: (id: string) => api.users.remove(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['staff-users'] }),
   });
 
@@ -338,6 +337,7 @@ export function UsersPage() {
           user={dialog.user}
           events={events}
           onClose={() => setDialog(null)}
+          api={api}
         />
       )}
     </div>

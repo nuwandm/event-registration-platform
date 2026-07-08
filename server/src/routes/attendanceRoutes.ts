@@ -1,10 +1,9 @@
 import { Router } from 'express';
 import { attendanceController, scanValidation } from '../controllers/attendanceController';
-import { authGuard } from '../middleware/authGuard';
 
-const router = Router();
+const router = Router({ mergeParams: true });
 
-router.post('/admin/attendance/scan', authGuard, scanValidation, attendanceController.scan);
-router.get('/admin/attendance/:eventId', authGuard, attendanceController.getAttendanceList);
+router.post('/scan', scanValidation, attendanceController.scan);
+router.get('/:eventId', attendanceController.getAttendanceList);
 
 export default router;

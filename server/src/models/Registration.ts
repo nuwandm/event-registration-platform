@@ -4,6 +4,7 @@ export type RegistrationStatus = 'pending' | 'approved' | 'rejected';
 export type AttendanceStatus = 'not_attended' | 'attended';
 
 export interface IRegistration extends Document {
+  tenantId: mongoose.Types.ObjectId;
   eventId: mongoose.Types.ObjectId;
   registrationNumber: string;
   fullName: string;
@@ -27,6 +28,12 @@ export interface IRegistration extends Document {
 
 const registrationSchema = new Schema<IRegistration>(
   {
+    tenantId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Tenant',
+      required: true,
+      index: true,
+    },
     eventId: {
       type: Schema.Types.ObjectId,
       ref: 'Event',

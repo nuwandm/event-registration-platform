@@ -23,19 +23,17 @@ type LeanOrDoc = IRegistration & { _id: unknown };
 export const registrationService = {
   async submitRegistration(
     eventId: string,
+    tenantId: string,
     dto: SubmitRegistrationDTO,
     receiptFile: Express.Multer.File
   ): Promise<IRegistration> {
-    // 1. Validate event exists and is published
-    const event = await eventRepository.findBySlugPublic(eventId);
-    if (!event) {
-      const byId = await eventRepository.findById(eventId);
-      if (!byId || byId.status !== 'published') {
-        throw new AppError('Event not found or registration is not open', 404);
-      }
+    // 1. Validate event exists and is published within this tenant
+    const byId = await eventRepository.findByIdForTenant(eventId, tenantId);
+    if (!byId || byId.status !== 'published') {
+      throw new AppError('Event not found or registration is not open', 404);
     }
 
-    const targetEvent = event ?? (await eventRepository.findById(eventId))!;
+    const targetEvent = byId;
     const now = new Date();
 
     if (now < new Date(targetEvent.registrationOpenDate)) {
@@ -64,7 +62,7 @@ export const registrationService = {
     // 4. Upload receipt to Cloudinary
     const { url: receiptUrl, publicId: receiptPublicId } = await uploadService.uploadFile(
       receiptFile.buffer,
-      'eventhub/receipts',
+      `eventhub/${tenantId}/receipts`,
       receiptFile.originalname
     );
 
@@ -73,6 +71,7 @@ export const registrationService = {
 
     // 6. Create registration
     const registration = await registrationRepository.create({
+      tenantId: new mongoose.Types.ObjectId(tenantId),
       eventId: new mongoose.Types.ObjectId(targetEventId),
       registrationNumber,
       ...dto,
@@ -123,7 +122,6 @@ export const registrationService = {
       throw new AppError('Rejected registrations cannot be approved', 400);
     }
 
-    // Generate QR token + image
     const { token, qrCodeUrl } = await qrService.generateQR(id);
 
     const updated = await registrationRepository.updateById(id, {
@@ -170,9 +168,7 @@ export const registrationService = {
     const update: Partial<IRegistration> = {};
 
     if (payload.status && payload.status !== reg.status) {
-      // If promoting to approved and no QR yet, generate one
       if (payload.status === 'approved' && !reg.qrToken) {
-        const { qrService } = await import('./qrService');
         const { token, qrCodeUrl } = await qrService.generateQR(id);
         update.qrToken = token;
         update.qrCodeUrl = qrCodeUrl;

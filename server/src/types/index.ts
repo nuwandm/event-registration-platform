@@ -1,8 +1,10 @@
 import { Request } from 'express';
 import { IAdmin } from '../models/Admin';
+import { ITenant } from '../models/Tenant';
 
 export interface AuthRequest extends Request {
   admin?: IAdmin;
+  tenant?: ITenant;
 }
 
 export interface ApiResponse<T = unknown> {

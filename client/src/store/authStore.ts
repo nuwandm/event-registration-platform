@@ -5,8 +5,9 @@ import type { Admin } from '@/types';
 interface AuthState {
   token: string | null;
   admin: Admin | null;
+  orgSlug: string | null;
   isAuthenticated: boolean;
-  setAuth: (token: string, admin: Admin) => void;
+  setAuth: (token: string, admin: Admin, orgSlug?: string) => void;
   logout: () => void;
 }
 
@@ -15,17 +16,23 @@ export const useAuthStore = create<AuthState>()(
     (set) => ({
       token: null,
       admin: null,
+      orgSlug: null,
       isAuthenticated: false,
 
-      setAuth: (token, admin) =>
-        set({ token, admin, isAuthenticated: true }),
+      setAuth: (token, admin, orgSlug) =>
+        set({ token, admin, orgSlug: orgSlug ?? null, isAuthenticated: true }),
 
       logout: () =>
-        set({ token: null, admin: null, isAuthenticated: false }),
+        set({ token: null, admin: null, orgSlug: null, isAuthenticated: false }),
     }),
     {
       name: 'auth-storage',
-      partialize: (state) => ({ token: state.token, admin: state.admin, isAuthenticated: state.isAuthenticated }),
+      partialize: (state) => ({
+        token: state.token,
+        admin: state.admin,
+        orgSlug: state.orgSlug,
+        isAuthenticated: state.isAuthenticated,
+      }),
     }
   )
 );

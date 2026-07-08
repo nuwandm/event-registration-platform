@@ -14,11 +14,13 @@ export interface EventOption {
   status: string;
 }
 
-export const dashboardApi = {
-  getStats: () => api.get<ApiResponse<{ stats: DashboardStats }>>('/dashboard/stats'),
+export const dashboardApi = (orgSlug: string) => ({
+  getStats: () =>
+    api.get<ApiResponse<{ stats: DashboardStats }>>(`/${orgSlug}/admin/dashboard/stats`),
   getChartData: (days = 30, eventId?: string) =>
-    api.get<ApiResponse<{ points: ChartPoint[] }>>('/dashboard/chart', {
+    api.get<ApiResponse<{ points: ChartPoint[] }>>(`/${orgSlug}/admin/dashboard/chart`, {
       params: { days, ...(eventId && eventId !== 'all' ? { eventId } : {}) },
     }),
-  getEventOptions: () => api.get<ApiResponse<{ events: EventOption[] }>>('/dashboard/events'),
-};
+  getEventOptions: () =>
+    api.get<ApiResponse<{ events: EventOption[] }>>(`/${orgSlug}/admin/dashboard/events`),
+});

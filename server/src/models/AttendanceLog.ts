@@ -3,6 +3,7 @@ import mongoose, { Document, Schema } from 'mongoose';
 export type ScanStatus = 'success' | 'duplicate' | 'invalid';
 
 export interface IAttendanceLog extends Document {
+  tenantId: mongoose.Types.ObjectId;
   registrationId: mongoose.Types.ObjectId;
   eventId: mongoose.Types.ObjectId;
   scannedBy: mongoose.Types.ObjectId;
@@ -14,6 +15,12 @@ export interface IAttendanceLog extends Document {
 
 const attendanceLogSchema = new Schema<IAttendanceLog>(
   {
+    tenantId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Tenant',
+      required: true,
+      index: true,
+    },
     registrationId: {
       type: Schema.Types.ObjectId,
       ref: 'Registration',
@@ -43,6 +50,6 @@ const attendanceLogSchema = new Schema<IAttendanceLog>(
   { timestamps: true }
 );
 
-attendanceLogSchema.index({ eventId: 1, scannedAt: -1 });
+attendanceLogSchema.index({ tenantId: 1, eventId: 1, scannedAt: -1 });
 
 export const AttendanceLog = mongoose.model<IAttendanceLog>('AttendanceLog', attendanceLogSchema);
