@@ -6,12 +6,12 @@ import {
   ArrowLeft, CalendarDays, MapPin, CreditCard, Users, Building2,
   Pencil, Trash2, Link2, UserCog, DoorOpen, DoorClosed,
   CheckCircle2, Clock, Eye, Search, ChevronLeft, ChevronRight,
-  SquarePen, Copy, Check,
+  SquarePen, Copy, Check, BarChart2, ListPlus, Plus, X,
 } from 'lucide-react';
 import { format } from 'date-fns';
 
 import { useTenant } from '@/context/TenantContext';
-import type { Registration, StaffUser } from '@/types';
+import type { Registration, StaffUser, Question } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -27,9 +27,12 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from '@/components/ui/dialog';
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from '@/components/ui/select';
 
 // ── Tabs ──────────────────────────────────────────────────────────────────────
-const TABS = ['Details', 'Participants', 'Staff'] as const;
+const TABS = ['Details', 'Participants', 'Responses', 'Questionnaire', 'Staff'] as const;
 type Tab = typeof TABS[number];
 
 const STATUS_BADGE: Record<string, 'success' | 'warning' | 'secondary' | 'destructive'> = {
@@ -194,6 +197,8 @@ export function AdminEventDetailPage() {
       {/* Tab content */}
       {tab === 'Details' && <DetailsTab event={event} orgSlug={orgSlug} />}
       {tab === 'Participants' && <ParticipantsTab eventId={id!} />}
+      {tab === 'Responses' && <ResponsesTab eventId={id!} questions={event.questions ?? []} />}
+      {tab === 'Questionnaire' && <QuestionnaireTab event={event} onSaved={() => qc.invalidateQueries({ queryKey: ['admin-event-detail', id] })} />}
       {tab === 'Staff' && <StaffTab eventId={id!} eventName={event.name} />}
 
       {/* Edit dialog */}
@@ -608,6 +613,302 @@ function ParticipantsTab({ eventId }: { eventId: string }) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+// ── Responses tab ─────────────────────────────────────────────────────────────
+function ResponsesTab({ eventId, questions }: { eventId: string; questions: Question[] }) {
+  const { api } = useTenant();
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['event-responses', eventId],
+    queryFn: () => api.registrations.getAll({ eventId, limit: 1000 }),
+    select: (res) => res.data.data?.data ?? [],
+  });
+
+  const registrations: Registration[] = data ?? [];
+  const totalResponses = registrations.filter((r) => r.answers && r.answers.length > 0).length;
+
+  if (questions.length === 0) {
+    return (
+      <div className="py-16 text-center text-slate-400">
+        <BarChart2 className="w-10 h-10 mx-auto mb-3 opacity-30" />
+        <p className="font-medium text-slate-500 mb-1">No questions yet</p>
+        <p className="text-sm">Add questions in the Questionnaire tab first.</p>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return <div className="space-y-4">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-32 w-full rounded-xl" />)}</div>;
+  }
+
+  return (
+    <div className="space-y-5">
+      {/* Summary header */}
+      <div className="bg-white rounded-xl border border-slate-200 px-5 py-4 flex items-center gap-4">
+        <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
+          <BarChart2 className="w-5 h-5 text-blue-600" />
+        </div>
+        <div>
+          <p className="text-lg font-bold text-slate-800">{totalResponses} response{totalResponses !== 1 ? 's' : ''}</p>
+          <p className="text-xs text-slate-400">{questions.length} question{questions.length !== 1 ? 's' : ''} · accepting responses</p>
+        </div>
+      </div>
+
+      {/* Per-question summary */}
+      {questions.map((q, qi) => {
+        const allAnswers = registrations
+          .flatMap((r) => r.answers ?? [])
+          .filter((a) => a.questionId === q._id);
+
+        const answered = allAnswers.length;
+
+        if (q.type === 'radio' || q.type === 'checkbox' || q.type === 'dropdown') {
+          // Count occurrences per option
+          const counts: Record<string, number> = {};
+          allAnswers.forEach((a) => {
+            const vals = Array.isArray(a.answer) ? a.answer : [a.answer];
+            vals.forEach((v) => { if (v) counts[v] = (counts[v] ?? 0) + 1; });
+          });
+          const maxCount = Math.max(...Object.values(counts), 1);
+
+          return (
+            <div key={q._id} className="bg-white rounded-xl border border-slate-200 p-5">
+              <p className="text-xs text-slate-400 mb-0.5">Question {qi + 1}</p>
+              <p className="font-semibold text-slate-800 mb-1">{q.label}</p>
+              <p className="text-xs text-slate-400 mb-4">{answered} response{answered !== 1 ? 's' : ''}</p>
+              <div className="space-y-3">
+                {q.options.map((opt) => {
+                  const count = counts[opt] ?? 0;
+                  const pct = answered > 0 ? Math.round((count / answered) * 100) : 0;
+                  return (
+                    <div key={opt}>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-sm text-slate-700">{opt}</span>
+                        <span className="text-xs font-semibold text-slate-500">{count} ({pct}%)</span>
+                      </div>
+                      <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-blue-500 rounded-full transition-all"
+                          style={{ width: `${(count / maxCount) * 100}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        }
+
+        // Text / textarea — show individual responses
+        const textAnswers = allAnswers.map((a) => (Array.isArray(a.answer) ? a.answer.join(', ') : String(a.answer ?? ''))).filter(Boolean);
+        return (
+          <div key={q._id} className="bg-white rounded-xl border border-slate-200 p-5">
+            <p className="text-xs text-slate-400 mb-0.5">Question {qi + 1}</p>
+            <p className="font-semibold text-slate-800 mb-1">{q.label}</p>
+            <p className="text-xs text-slate-400 mb-4">{answered} response{answered !== 1 ? 's' : ''}</p>
+            {textAnswers.length === 0 ? (
+              <p className="text-sm text-slate-400 italic">No responses yet</p>
+            ) : (
+              <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+                {textAnswers.map((ans, i) => (
+                  <div key={i} className="bg-slate-50 rounded-lg px-3 py-2 text-sm text-slate-700 border border-slate-100">
+                    {ans}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ── Questionnaire tab ─────────────────────────────────────────────────────────
+const Q_TYPES: { value: Question['type']; label: string }[] = [
+  { value: 'text', label: 'Short Text' },
+  { value: 'textarea', label: 'Long Text' },
+  { value: 'radio', label: 'Multiple Choice' },
+  { value: 'checkbox', label: 'Checkboxes' },
+  { value: 'dropdown', label: 'Dropdown' },
+];
+
+const NEEDS_OPTIONS: Question['type'][] = ['radio', 'checkbox', 'dropdown'];
+
+function QuestionnaireTab({ event, onSaved }: { event: import('@/types').Event; onSaved: () => void }) {
+  const { api } = useTenant();
+  const [questions, setQuestions] = useState<Array<Omit<Question, '_id'> & { _id: string }>>(() =>
+    (event.questions ?? []).map((q) => ({ ...q, _id: q._id ?? String(Date.now() + Math.random()) }))
+  );
+  const [saving, setSaving] = useState(false);
+
+  const addQuestion = () => {
+    setQuestions((prev) => [
+      ...prev,
+      { _id: String(Date.now()), label: '', type: 'text', options: [], required: false },
+    ]);
+  };
+
+  const removeQuestion = (idx: number) => setQuestions((prev) => prev.filter((_, i) => i !== idx));
+
+  const updateQuestion = (idx: number, patch: Partial<Question>) => {
+    setQuestions((prev) => prev.map((q, i) => (i === idx ? { ...q, ...patch } : q)));
+  };
+
+  const updateOption = (qIdx: number, oIdx: number, val: string) => {
+    setQuestions((prev) =>
+      prev.map((q, i) => {
+        if (i !== qIdx) return q;
+        const opts = [...q.options];
+        opts[oIdx] = val;
+        return { ...q, options: opts };
+      })
+    );
+  };
+
+  const addOption = (qIdx: number) => {
+    setQuestions((prev) => prev.map((q, i) => (i === qIdx ? { ...q, options: [...q.options, ''] } : q)));
+  };
+
+  const removeOption = (qIdx: number, oIdx: number) => {
+    setQuestions((prev) =>
+      prev.map((q, i) => (i === qIdx ? { ...q, options: q.options.filter((_, j) => j !== oIdx) } : q))
+    );
+  };
+
+  const save = async () => {
+    for (const q of questions) {
+      if (!q.label.trim()) { toast.error('All questions must have a label'); return; }
+      if (NEEDS_OPTIONS.includes(q.type) && q.options.filter(Boolean).length === 0) {
+        toast.error(`"${q.label}" needs at least one option`); return;
+      }
+    }
+    setSaving(true);
+    try {
+      const payload = { questions: questions.map(({ label, type, options, required }) => ({ label, type, options, required })) };
+      await api.events.update(event._id, payload as Record<string, unknown>);
+      toast.success('Questions saved');
+      onSaved();
+    } catch {
+      toast.error('Failed to save questions');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm font-semibold text-slate-700">Custom Questions</p>
+          <p className="text-xs text-slate-400 mt-0.5">Participants will answer these when registering.</p>
+        </div>
+        <Button size="sm" onClick={save} disabled={saving}>
+          {saving ? 'Saving…' : 'Save Questions'}
+        </Button>
+      </div>
+
+      {questions.length === 0 && (
+        <div className="py-10 text-center text-slate-400 border-2 border-dashed border-slate-200 rounded-xl">
+          <ListPlus className="w-8 h-8 mx-auto mb-2 opacity-40" />
+          <p className="text-sm">No questions yet. Click "Add Question" to start.</p>
+        </div>
+      )}
+
+      <div className="space-y-4">
+        {questions.map((q, qi) => (
+          <div key={q._id} className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">
+            <div className="flex items-start gap-2">
+              <div className="flex-1 space-y-3">
+                {/* Label */}
+                <div>
+                  <Label className="text-xs text-slate-500 mb-1 block">Question Label *</Label>
+                  <Input
+                    value={q.label}
+                    onChange={(e) => updateQuestion(qi, { label: e.target.value })}
+                    placeholder="e.g. What is your dietary preference?"
+                    className="bg-slate-50"
+                  />
+                </div>
+
+                {/* Type */}
+                <div>
+                  <Label className="text-xs text-slate-500 mb-1 block">Answer Type</Label>
+                  <Select value={q.type} onValueChange={(v) => updateQuestion(qi, { type: v as Question['type'], options: [] })}>
+                    <SelectTrigger className="bg-slate-50">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Q_TYPES.map((t) => (
+                        <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Options */}
+                {NEEDS_OPTIONS.includes(q.type) && (
+                  <div>
+                    <Label className="text-xs text-slate-500 mb-1 block">Options</Label>
+                    <div className="space-y-2">
+                      {q.options.map((opt, oi) => (
+                        <div key={oi} className="flex items-center gap-2">
+                          {q.type === 'radio' && <div className="w-4 h-4 rounded-full border-2 border-slate-300 shrink-0" />}
+                          {q.type === 'checkbox' && <div className="w-4 h-4 rounded border-2 border-slate-300 shrink-0" />}
+                          {q.type === 'dropdown' && <span className="text-xs text-slate-400 w-4 text-center shrink-0">{oi + 1}.</span>}
+                          <Input
+                            value={opt}
+                            onChange={(e) => updateOption(qi, oi, e.target.value)}
+                            placeholder={`Option ${oi + 1}`}
+                            className="bg-white flex-1"
+                          />
+                          <button type="button" onClick={() => removeOption(qi, oi)} className="p-1.5 text-slate-400 hover:text-red-500 transition-colors">
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ))}
+                      <button type="button" onClick={() => addOption(qi)} className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1 mt-1">
+                        <Plus className="w-3 h-3" /> Add option
+                      </button>
+                      {q.options.filter(Boolean).length === 0 && (
+                        <p className="text-xs text-amber-500">Add at least one option</p>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Required */}
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={q.required}
+                    onChange={(e) => updateQuestion(qi, { required: e.target.checked })}
+                    className="w-4 h-4 accent-blue-600"
+                  />
+                  <span className="text-xs text-slate-600 font-medium">Required</span>
+                </label>
+              </div>
+
+              {/* Delete */}
+              <button type="button" onClick={() => removeQuestion(qi)} className="p-1.5 text-slate-400 hover:text-red-500 transition-colors mt-0.5 shrink-0">
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <button
+        type="button"
+        onClick={addQuestion}
+        className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-slate-200 rounded-xl py-3 text-sm text-slate-500 hover:border-blue-400 hover:text-blue-600 transition-colors"
+      >
+        <Plus className="w-4 h-4" /> Add Question
+      </button>
     </div>
   );
 }
