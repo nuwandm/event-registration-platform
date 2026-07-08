@@ -112,7 +112,8 @@ function Field({ label, error, children, required }: { label: string; error?: st
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 export function RegisterPage() {
-  const { api, orgSlug } = useTenant();
+  const { api, orgSlug, tenant } = useTenant();
+  const brand = tenant?.primaryColor ?? '#3b82f6';
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
 
@@ -202,10 +203,10 @@ export function RegisterPage() {
         Back to event
       </Link>
 
-      {/* Google Forms style hero card */}
+      {/* Hero card — tenant branded */}
       <div className="rounded-2xl overflow-hidden border border-slate-200 shadow-sm mb-6">
-        {/* Full-width banner */}
-        <div className="relative w-full bg-linear-to-br from-blue-500 to-indigo-700">
+        {/* Banner */}
+        <div className="relative w-full" style={{ background: `linear-gradient(135deg, ${brand}dd, ${brand}99)` }}>
           {event.bannerImage ? (
             <img
               src={event.bannerImage}
@@ -214,29 +215,44 @@ export function RegisterPage() {
               style={event.bannerPosition ? { objectPosition: `${event.bannerPosition.x}% ${event.bannerPosition.y}%` } : undefined}
             />
           ) : (
-            <div className="w-full h-44 sm:h-56 flex items-center justify-center">
-              <CalendarDays className="w-16 h-16 text-white/20" />
+            <div className="w-full h-44 sm:h-56 flex flex-col items-center justify-center gap-4">
+              {tenant?.logoUrl ? (
+                <img src={tenant.logoUrl} alt={tenant.name} className="h-20 w-auto object-contain drop-shadow-lg" />
+              ) : (
+                <CalendarDays className="w-16 h-16 text-white/40" />
+              )}
             </div>
           )}
-          {/* Gradient overlay for readability */}
-          <div className="absolute inset-0 bg-linear-to-t from-black/40 via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-linear-to-t from-black/50 via-transparent to-transparent" />
+
+          {/* Org badge top-left */}
+          {tenant?.name && (
+            <div className="absolute top-3 left-3 flex items-center gap-2 bg-black/40 backdrop-blur-sm rounded-full px-3 py-1.5">
+              {tenant.logoUrl && (
+                <img src={tenant.logoUrl} alt={tenant.name} className="h-5 w-auto object-contain" />
+              )}
+              <span className="text-white text-xs font-semibold">{tenant.name}</span>
+            </div>
+          )}
         </div>
 
-        {/* Event info below banner — blue left border like Google Forms */}
-        <div className="bg-white border-t-4 border-blue-600 px-6 py-5">
-          <p className="text-xs font-semibold text-blue-500 uppercase tracking-widest mb-1">Registration Form</p>
+        {/* Event info — brand colored left border */}
+        <div className="bg-white px-6 py-5" style={{ borderTop: `4px solid ${brand}` }}>
+          <p className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: brand }}>
+            Registration Form
+          </p>
           <h2 className="text-2xl font-bold text-slate-800 leading-tight mb-3">{event.name}</h2>
           <div className="flex flex-wrap gap-x-5 gap-y-1.5 text-sm text-slate-500">
             <span className="flex items-center gap-1.5">
-              <CalendarDays className="w-4 h-4 text-blue-400" />
+              <CalendarDays className="w-4 h-4" style={{ color: brand }} />
               {format(new Date(event.eventDate), 'EEEE, MMM d, yyyy')} · {format(new Date(event.eventDate), 'h:mm a')}
             </span>
             <span className="flex items-center gap-1.5">
-              <MapPin className="w-4 h-4 text-blue-400" />
+              <MapPin className="w-4 h-4" style={{ color: brand }} />
               {event.venue}
             </span>
             <span className="flex items-center gap-1.5">
-              <CreditCard className="w-4 h-4 text-blue-400" />
+              <CreditCard className="w-4 h-4" style={{ color: brand }} />
               {event.registrationFee === 0 ? 'Free Entry' : `LKR ${event.registrationFee.toLocaleString()}`}
             </span>
           </div>
@@ -249,7 +265,7 @@ export function RegisterPage() {
           {/* Section: Personal Information */}
           <div className="px-6 py-5 border-b border-slate-100">
             <h3 className="font-semibold text-slate-800 mb-4 flex items-center gap-2">
-              <User className="w-4 h-4 text-blue-500" />
+              <User className="w-4 h-4" style={{ color: brand }} />
               Personal Information
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -308,7 +324,7 @@ export function RegisterPage() {
           {/* Section: Professional (optional) */}
           <div className="px-6 py-5 border-b border-slate-100">
             <h3 className="font-semibold text-slate-800 mb-1 flex items-center gap-2">
-              <Briefcase className="w-4 h-4 text-blue-500" />
+              <Briefcase className="w-4 h-4" style={{ color: brand }} />
               Professional Details
               <span className="text-xs font-normal text-slate-400 ml-1">(Optional)</span>
             </h3>
@@ -327,7 +343,7 @@ export function RegisterPage() {
           {event.registrationFee > 0 && (
             <div className="px-6 py-5 border-b border-slate-100 bg-amber-50/50">
               <h3 className="font-semibold text-slate-800 mb-1 flex items-center gap-2">
-                <Building2 className="w-4 h-4 text-amber-600" />
+                <Building2 className="w-4 h-4" style={{ color: brand }} />
                 Payment Instructions
               </h3>
               <p className="text-xs text-slate-500 mb-3">
@@ -349,7 +365,7 @@ export function RegisterPage() {
           {/* Section: Receipt Upload */}
           <div className="px-6 py-5">
             <h3 className="font-semibold text-slate-800 mb-1 flex items-center gap-2">
-              <Upload className="w-4 h-4 text-blue-500" />
+              <Upload className="w-4 h-4" style={{ color: brand }} />
               Upload Payment Receipt
               <span className="text-red-500">*</span>
             </h3>
@@ -384,16 +400,21 @@ export function RegisterPage() {
           <p className="text-xs text-slate-400">
             By registering you agree to our terms. Your data is used only for event management.
           </p>
-          <Button type="submit" size="lg" disabled={isPending} className="w-full sm:w-auto min-w-45">
+          <button
+            type="submit"
+            disabled={isPending}
+            className="w-full sm:w-auto min-w-45 inline-flex items-center justify-center gap-2 px-8 py-3 rounded-xl text-white font-semibold text-sm transition-opacity hover:opacity-90 disabled:opacity-60"
+            style={{ background: brand }}
+          >
             {isPending ? (
-              <span className="flex items-center gap-2">
+              <>
                 <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 Submitting...
-              </span>
+              </>
             ) : (
               'Submit Registration'
             )}
-          </Button>
+          </button>
         </div>
       </form>
     </div>

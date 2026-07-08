@@ -11,15 +11,15 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { StatusCheckWidget } from '@/components/public/StatusCheckWidget';
 
-function EventCard({ event, orgSlug }: { event: Event; orgSlug: string }) {
+function EventCard({ event, orgSlug, brand }: { event: Event; orgSlug: string; brand: string }) {
   const isRegistrationOpen =
     new Date() >= new Date(event.registrationOpenDate) &&
     new Date() <= new Date(event.registrationCloseDate);
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow group">
+    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-md transition-all duration-200 group flex flex-col">
       {/* Banner */}
-      <div className="relative h-44 bg-linear-to-br from-blue-500 to-indigo-600 overflow-hidden">
+      <div className="relative h-44 overflow-hidden" style={{ background: `linear-gradient(135deg, ${brand}cc, ${brand}66)` }}>
         {event.bannerImage ? (
           <img
             src={event.bannerImage}
@@ -36,7 +36,7 @@ function EventCard({ event, orgSlug }: { event: Event; orgSlug: string }) {
           {event.registrationFee === 0 ? (
             <Badge variant="success">Free</Badge>
           ) : (
-            <Badge className="bg-white/90 text-slate-800 border-0">
+            <Badge className="bg-white/90 text-slate-800 border-0 shadow-sm">
               LKR {event.registrationFee.toLocaleString()}
             </Badge>
           )}
@@ -44,24 +44,24 @@ function EventCard({ event, orgSlug }: { event: Event; orgSlug: string }) {
       </div>
 
       {/* Content */}
-      <div className="p-5">
-        <h3 className="font-semibold text-slate-800 text-lg leading-snug mb-2 line-clamp-2">
+      <div className="p-5 flex flex-col flex-1">
+        <h3 className="font-semibold text-slate-800 text-base leading-snug mb-2 line-clamp-2">
           {event.name}
         </h3>
-        <p className="text-slate-500 text-sm mb-4 line-clamp-2">{event.description}</p>
+        <p className="text-slate-500 text-sm mb-4 line-clamp-2 flex-1">{event.description}</p>
 
         <div className="space-y-1.5 mb-4">
           <div className="flex items-center gap-2 text-sm text-slate-500">
-            <CalendarDays className="w-4 h-4 shrink-0 text-blue-500" />
+            <CalendarDays className="w-4 h-4 shrink-0" style={{ color: brand }} />
             {format(new Date(event.eventDate), 'EEEE, MMMM d, yyyy · h:mm a')}
           </div>
           <div className="flex items-center gap-2 text-sm text-slate-500">
-            <MapPin className="w-4 h-4 shrink-0 text-blue-500" />
+            <MapPin className="w-4 h-4 shrink-0" style={{ color: brand }} />
             {event.venue}
           </div>
           {event.maxParticipants && (
             <div className="flex items-center gap-2 text-sm text-slate-500">
-              <Users className="w-4 h-4 shrink-0 text-blue-500" />
+              <Users className="w-4 h-4 shrink-0" style={{ color: brand }} />
               {event.registrationCount} / {event.maxParticipants} registered
             </div>
           )}
@@ -70,8 +70,8 @@ function EventCard({ event, orgSlug }: { event: Event; orgSlug: string }) {
         <div className="flex items-center justify-between gap-3 pt-4 border-t border-slate-100">
           <div>
             {isRegistrationOpen ? (
-              <div className="flex items-center gap-1 text-xs text-emerald-600 font-medium">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <div className="flex items-center gap-1 text-xs font-medium" style={{ color: brand }}>
+                <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: brand }} />
                 Registration Open
               </div>
             ) : new Date() < new Date(event.registrationOpenDate) ? (
@@ -84,12 +84,13 @@ function EventCard({ event, orgSlug }: { event: Event; orgSlug: string }) {
             )}
           </div>
           {isRegistrationOpen && (
-            <Button asChild size="sm">
-              <Link to={`/${orgSlug}/events/${event.slug}/register`}>
-                Register
-                <ArrowRight className="w-3.5 h-3.5 ml-1" />
-              </Link>
-            </Button>
+            <Link
+              to={`/${orgSlug}/events/${event.slug}/register`}
+              className="inline-flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-xl text-white transition-opacity hover:opacity-90"
+              style={{ background: brand }}
+            >
+              Register <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
           )}
         </div>
       </div>
@@ -112,7 +113,9 @@ function EventCardSkeleton() {
 }
 
 export function HomePage() {
-  const { api, orgSlug } = useTenant();
+  const { api, orgSlug, tenant } = useTenant();
+  const brand = tenant?.primaryColor ?? '#3b82f6';
+
   const { data, isLoading } = useQuery({
     queryKey: ['public-events', orgSlug],
     queryFn: () => api.events.getPublished(),
@@ -120,42 +123,65 @@ export function HomePage() {
   });
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-10">
-      {/* Hero */}
-      <div className="text-center mb-12">
-        <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 text-sm font-medium px-3 py-1.5 rounded-full mb-4">
-          <CalendarDays className="w-4 h-4" />
-          Upcoming Events
-        </div>
-        <h1 className="text-4xl sm:text-5xl font-bold text-slate-800 mb-4 leading-tight">
-          Register for Events
-        </h1>
-        <p className="text-slate-500 text-lg max-w-xl mx-auto">
-          Browse upcoming events, register online, and receive your QR code for seamless entry.
-        </p>
-      </div>
-
-      {/* Status check widget */}
-      <div className="mb-12">
-        <StatusCheckWidget />
-      </div>
-
-      {/* Grid */}
-      {isLoading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {Array.from({ length: 6 }).map((_, i) => <EventCardSkeleton key={i} />)}
-        </div>
-      ) : !data || data.length === 0 ? (
-        <EmptyState
-          icon={CalendarDays}
-          title="No upcoming events"
-          description="Check back later for new events."
+    <div>
+      {/* Branded hero */}
+      <div className="relative overflow-hidden" style={{ background: `linear-gradient(135deg, ${brand}18 0%, ${brand}08 100%)` }}>
+        <div
+          className="absolute inset-0 opacity-10 pointer-events-none"
+          style={{ background: `radial-gradient(circle at 20% 50%, ${brand} 0%, transparent 60%)` }}
         />
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {data.map((event) => <EventCard key={event._id} event={event} orgSlug={orgSlug} />)}
+        <div className="max-w-6xl mx-auto px-4 py-16 text-center relative">
+          {/* Org logo */}
+          {tenant?.logoUrl && (
+            <div className="flex justify-center mb-6">
+              <img
+                src={tenant.logoUrl}
+                alt={tenant.name}
+                className="h-20 w-auto object-contain drop-shadow-md"
+              />
+            </div>
+          )}
+
+          {tenant?.name && (
+            <p className="text-sm font-semibold uppercase tracking-widest mb-3" style={{ color: brand }}>
+              {tenant.name}
+            </p>
+          )}
+
+          <h1 className="text-4xl sm:text-5xl font-extrabold text-slate-800 mb-4 leading-tight">
+            Upcoming Events
+          </h1>
+          <p className="text-slate-500 text-lg max-w-xl mx-auto">
+            Browse events, register online, and receive your QR code for seamless entry.
+          </p>
         </div>
-      )}
+      </div>
+
+      <div className="max-w-6xl mx-auto px-4 py-10">
+        {/* Status check widget */}
+        <div className="mb-10">
+          <StatusCheckWidget />
+        </div>
+
+        {/* Grid */}
+        {isLoading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {Array.from({ length: 6 }).map((_, i) => <EventCardSkeleton key={i} />)}
+          </div>
+        ) : !data || data.length === 0 ? (
+          <EmptyState
+            icon={CalendarDays}
+            title="No upcoming events"
+            description="Check back later for new events."
+          />
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {data.map((event) => (
+              <EventCard key={event._id} event={event} orgSlug={orgSlug} brand={brand} />
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
