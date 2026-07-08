@@ -43,8 +43,8 @@ export function QRViewPage() {
     queryFn: () => registrationsApi.getStatus(id!),
     select: (res) => res.data.data?.registration,
     enabled: !!id,
-    refetchInterval: (data) =>
-      data?.state?.data?.status === 'pending' ? 30_000 : false,
+    refetchInterval: (query) =>
+      (query.state.data as { status?: string } | undefined)?.status === 'pending' ? 30_000 : false,
   });
 
   const handleDownload = () => {

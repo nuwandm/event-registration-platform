@@ -3,7 +3,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { ImagePlus, X, CalendarDays, Building2, CreditCard } from 'lucide-react';
+import { ImagePlus, X, CalendarDays, CreditCard } from 'lucide-react';
 
 import { eventFormSchema, type EventFormValues } from '@/schemas/event';
 import { eventsApi } from '@/api/eventsApi';
@@ -306,7 +306,7 @@ export function EventFormDialog({ open, onClose, event }: EventFormDialogProps) 
           <Button variant="outline" className="flex-1" onClick={onClose} disabled={isPending}>
             Cancel
           </Button>
-          <Button className="flex-1" onClick={handleSubmit((d) => mutate(d))} disabled={isPending}>
+          <Button className="flex-1" onClick={handleSubmit((d) => mutate(d as EventFormValues))} disabled={isPending}>
             {isPending ? (
               <span className="flex items-center gap-2">
                 <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />

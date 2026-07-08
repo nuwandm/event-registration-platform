@@ -5,8 +5,8 @@ import {
   BarChart3, Activity, Filter,
 } from 'lucide-react';
 import {
-  ResponsiveContainer, LineChart, Line, BarChart, Bar,
-  XAxis, YAxis, CartesianGrid, Tooltip, Legend, Area, AreaChart,
+  ResponsiveContainer, BarChart, Bar,
+  XAxis, YAxis, CartesianGrid, Tooltip, Area, AreaChart,
 } from 'recharts';
 import { format } from 'date-fns';
 

@@ -15,7 +15,10 @@ export const eventFormSchema = z.object({
   registrationOpenDate: z.string().min(1, 'Registration open date is required'),
   registrationCloseDate: z.string().min(1, 'Registration close date is required'),
   registrationFee: z.coerce.number().min(0, 'Fee cannot be negative'),
-  maxParticipants: z.coerce.number().min(1).optional().or(z.literal('')),
+  maxParticipants: z.preprocess(
+    (v) => (v === '' || v === null || v === undefined ? undefined : Number(v)),
+    z.number().min(1).optional()
+  ),
   status: z.enum(['draft', 'published', 'closed']),
   bankDetails: bankDetailsSchema,
 });

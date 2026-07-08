@@ -20,7 +20,6 @@ const SCANNER_ELEMENT_ID = 'qr-scanner-viewport';
 function ScanResultCard({ result, onReset }: { result: ScanResult; onReset: () => void }) {
   const isSuccess = result.outcome === 'success';
   const isDuplicate = result.outcome === 'duplicate';
-  const isInvalid = result.outcome === 'invalid';
 
   const config = {
     success: {

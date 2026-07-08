@@ -27,13 +27,11 @@ function toDatetimeLocal(d: Date): string {
 
 // ── Spinner column ────────────────────────────────────────────────────────────
 function TimeSpinner({
-  value,
   display,
   onIncrement,
   onDecrement,
   label,
 }: {
-  value: string;
   display: string;
   onIncrement: () => void;
   onDecrement: () => void;
@@ -120,7 +118,7 @@ export function DateTimePicker({
 
       <PopoverContent className="w-auto p-0 overflow-hidden" align="start">
         {/* Calendar */}
-        <Calendar mode="single" selected={selected} onSelect={handleDaySelect} initialFocus />
+        <Calendar mode="single" selected={selected} onSelect={handleDaySelect} />
 
         {/* Time section */}
         <div className="border-t border-slate-100 bg-white px-5 py-4">
@@ -132,7 +130,6 @@ export function DateTimePicker({
             {/* Hour */}
             <TimeSpinner
               label="Hour"
-              value={String(hour12)}
               display={String(hour12).padStart(2, '0')}
               onIncrement={incrementHour}
               onDecrement={decrementHour}
@@ -147,7 +144,6 @@ export function DateTimePicker({
             {/* Minute */}
             <TimeSpinner
               label="Min"
-              value={String(minutes)}
               display={String(minutes).padStart(2, '0')}
               onIncrement={incrementMinute}
               onDecrement={decrementMinute}

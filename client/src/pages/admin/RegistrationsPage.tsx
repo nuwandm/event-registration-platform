@@ -4,7 +4,6 @@ import { Users, Search, ChevronLeft, ChevronRight, Eye } from 'lucide-react';
 import { format } from 'date-fns';
 
 import { registrationsApi } from '@/api/registrationsApi';
-import type { Registration } from '@/types';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { RegistrationDetailSheet } from '@/components/admin/RegistrationDetailSheet';
