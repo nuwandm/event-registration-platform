@@ -11,7 +11,7 @@ export interface IBankDetails {
 export type QuestionType = 'text' | 'textarea' | 'radio' | 'checkbox' | 'dropdown';
 
 export interface IQuestion {
-  _id: string;
+  _id?: string;
   label: string;
   type: QuestionType;
   options: string[];

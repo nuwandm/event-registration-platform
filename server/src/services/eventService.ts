@@ -1,6 +1,6 @@
 import { eventRepository, EventQuery } from '../repositories/eventRepository';
 import { uploadService } from './uploadService';
-import { IEvent } from '../models/Event';
+import { IEvent, QuestionType } from '../models/Event';
 import { AppError } from '../middleware/errorHandler';
 import { PaginatedResult } from '../types';
 
@@ -23,7 +23,7 @@ export interface CreateEventDTO {
   };
   status?: 'draft' | 'published' | 'closed';
   bannerPosition?: { x: number; y: number };
-  questions?: Array<{ label: string; type: string; options: string[]; required: boolean }>;
+  questions?: Array<{ label: string; type: QuestionType; options: string[]; required: boolean }>;
 }
 
 export const eventService = {
