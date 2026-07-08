@@ -35,7 +35,7 @@ export function AdminLayout() {
 
   const handleLogout = () => {
     logout();
-    navigate(`/${orgSlug}/admin/login`);
+    navigate('/login');
   };
 
   const isActive = (to: string, exact?: boolean) =>

@@ -18,7 +18,7 @@ export function SuperAdminLayout() {
 
   const handleLogout = () => {
     logout();
-    navigate('/superadmin/login');
+    navigate('/login');
   };
 
   const isActive = (to: string, exact: boolean) =>

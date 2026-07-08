@@ -11,10 +11,7 @@ export function ProtectedRoute({ requiredRole }: ProtectedRouteProps) {
   const { orgSlug } = useParams<{ orgSlug: string }>();
 
   if (!isAuthenticated || !admin) {
-    if (requiredRole === 'super_admin') {
-      return <Navigate to="/superadmin/login" replace />;
-    }
-    return <Navigate to={`/${orgSlug}/admin/login`} replace />;
+    return <Navigate to="/login" replace />;
   }
 
   if (requiredRole === 'super_admin' && admin.role !== 'super_admin') {
