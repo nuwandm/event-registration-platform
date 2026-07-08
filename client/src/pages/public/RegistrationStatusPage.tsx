@@ -8,7 +8,6 @@ import { format } from 'date-fns';
 
 import { registrationsApi } from '@/api/registrationsApi';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { Event } from '@/types';
 
@@ -261,7 +260,7 @@ function Detail({ icon: Icon, label, value }: { icon: React.ElementType; label: 
     <div className="flex items-start gap-2 text-sm">
       <Icon className="w-3.5 h-3.5 text-slate-400 shrink-0 mt-0.5" />
       <span className="text-slate-400 shrink-0 w-24">{label}</span>
-      <span className="font-medium text-slate-700 break-words min-w-0">{value}</span>
+      <span className="font-medium text-slate-700 wrap-break-word min-w-0">{value}</span>
     </div>
   );
 }
