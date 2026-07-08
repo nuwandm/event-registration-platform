@@ -6,7 +6,6 @@ import { format } from 'date-fns';
 import { useTenant } from '@/context/TenantContext';
 import type { Event } from '@/types';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { StatusCheckWidget } from '@/components/public/StatusCheckWidget';
