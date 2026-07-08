@@ -15,7 +15,8 @@ export const dashboardController = {
   async getChartData(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const days = parseInt(req.query.days as string) || 30;
-      const points = await dashboardService.getChartData(Math.min(days, 90));
+      const eventId = req.query.eventId as string | undefined;
+      const points = await dashboardService.getChartData(Math.min(days, 90), eventId);
       res.json({ success: true, message: 'Chart data retrieved', data: { points } });
     } catch (error) {
       next(error);

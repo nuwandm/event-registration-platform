@@ -16,6 +16,9 @@ export interface EventOption {
 
 export const dashboardApi = {
   getStats: () => api.get<ApiResponse<{ stats: DashboardStats }>>('/dashboard/stats'),
-  getChartData: (days = 30) => api.get<ApiResponse<{ points: ChartPoint[] }>>('/dashboard/chart', { params: { days } }),
+  getChartData: (days = 30, eventId?: string) =>
+    api.get<ApiResponse<{ points: ChartPoint[] }>>('/dashboard/chart', {
+      params: { days, ...(eventId && eventId !== 'all' ? { eventId } : {}) },
+    }),
   getEventOptions: () => api.get<ApiResponse<{ events: EventOption[] }>>('/dashboard/events'),
 };

@@ -66,14 +66,22 @@ export const dashboardService = {
     };
   },
 
-  async getChartData(days = 30): Promise<ChartPoint[]> {
+  async getChartData(days = 30, eventId?: string): Promise<ChartPoint[]> {
     const from = new Date();
     from.setDate(from.getDate() - days + 1);
     from.setHours(0, 0, 0, 0);
 
+    const regMatch: Record<string, unknown> = { createdAt: { $gte: from } };
+    const attMatch: Record<string, unknown> = { status: 'success', scannedAt: { $gte: from } };
+
+    if (eventId && eventId !== 'all') {
+      regMatch.eventId = new mongoose.Types.ObjectId(eventId);
+      attMatch.eventId = new mongoose.Types.ObjectId(eventId);
+    }
+
     const [regData, attData] = await Promise.all([
       Registration.aggregate([
-        { $match: { createdAt: { $gte: from } } },
+        { $match: regMatch },
         {
           $group: {
             _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
@@ -83,7 +91,7 @@ export const dashboardService = {
         { $sort: { _id: 1 } },
       ]),
       AttendanceLog.aggregate([
-        { $match: { status: 'success', scannedAt: { $gte: from } } },
+        { $match: attMatch },
         {
           $group: {
             _id: { $dateToString: { format: '%Y-%m-%d', date: '$scannedAt' } },
