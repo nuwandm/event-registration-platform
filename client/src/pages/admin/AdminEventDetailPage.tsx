@@ -297,6 +297,7 @@ function DetailsTab({ event }: { event: import('@/types').Event }) {
 
 // ── Participants tab ───────────────────────────────────────────────────────────
 function ParticipantsTab({ eventId }: { eventId: string }) {
+  const { api } = useTenant();
   const qc = useQueryClient();
   const [page, setPage] = useState(1);
   const [activeTab, setActiveTab] = useState('');
@@ -363,7 +364,7 @@ function ParticipantsTab({ eventId }: { eventId: string }) {
     setEditRemarks(reg.adminRemarks ?? '');
   };
 
-  const registrations = data?.data ?? [];
+  const registrations: Registration[] = data?.data ?? [];
   const totalPages = data?.totalPages ?? 1;
   const total = data?.total ?? 0;
 
@@ -595,6 +596,7 @@ function ParticipantsTab({ eventId }: { eventId: string }) {
 
 // ── Staff tab ──────────────────────────────────────────────────────────────────
 function StaffTab({ eventId, eventName }: { eventId: string; eventName: string }) {
+  const { api, orgSlug } = useTenant();
   const qc = useQueryClient();
 
   const { data: allStaffData, isLoading } = useQuery({
@@ -608,11 +610,11 @@ function StaffTab({ eventId, eventName }: { eventId: string; eventName: string }
   });
 
   const allStaff: StaffUser[] = allStaffData?.data.data?.users ?? [];
-  const assignedIds = new Set((assignedData?.data.data?.staff ?? []).map((s) => s._id));
+  const assignedIds = new Set<string>((assignedData?.data.data?.staff ?? []).map((s: StaffUser) => s._id));
   const [selected, setSelected] = useState<Set<string>>(assignedIds);
 
   if (assignedData && selected.size === 0 && assignedIds.size > 0) {
-    setSelected(new Set(assignedIds));
+    setSelected(new Set<string>(assignedIds));
   }
 
   const saveMutation = useMutation({

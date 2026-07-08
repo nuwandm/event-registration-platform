@@ -4,7 +4,6 @@ import { ProtectedRoute } from './ProtectedRoute';
 // Layouts
 import { AdminLayout } from '@/layouts/AdminLayout';
 import { PublicLayout } from '@/layouts/PublicLayout';
-import { TenantProvider } from '@/context/TenantContext';
 
 // Public pages (tenant-scoped)
 import { HomePage } from '@/pages/public/HomePage';

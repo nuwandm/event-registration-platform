@@ -2,14 +2,14 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   CheckCircle2, XCircle, Ban, Search, Building2,
-  ChevronLeft, ChevronRight, MoreVertical,
+  ChevronLeft, ChevronRight,
 } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { tenantApi } from '@/api/tenantApi';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -18,11 +18,7 @@ import {
   AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
   AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useToast } from '@/hooks/use-toast';
 import type { Tenant, TenantStatus } from '@/types';
 
 const STATUS_COLORS: Record<TenantStatus, string> = {
@@ -63,48 +59,41 @@ function TenantRow({ tenant, onApprove, onReject, onSuspend }: {
       <td className="py-3 px-4 text-xs text-slate-400">
         {new Date(tenant.createdAt).toLocaleDateString()}
       </td>
-      <td className="py-3 px-4 text-right">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-              <MoreVertical className="w-4 h-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {tenant.status === 'pending' && (
-              <>
-                <DropdownMenuItem
-                  className="text-emerald-600 focus:text-emerald-600 focus:bg-emerald-50 gap-2"
-                  onClick={() => onApprove(tenant)}
-                >
-                  <CheckCircle2 className="w-4 h-4" /> Approve
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="text-red-600 focus:text-red-600 focus:bg-red-50 gap-2"
-                  onClick={() => onReject(tenant)}
-                >
-                  <XCircle className="w-4 h-4" /> Reject
-                </DropdownMenuItem>
-              </>
-            )}
-            {tenant.status === 'active' && (
-              <DropdownMenuItem
-                className="text-red-600 focus:text-red-600 focus:bg-red-50 gap-2"
-                onClick={() => onSuspend(tenant)}
-              >
-                <Ban className="w-4 h-4" /> Suspend
-              </DropdownMenuItem>
-            )}
-            {tenant.status === 'suspended' && (
-              <DropdownMenuItem
-                className="text-emerald-600 focus:text-emerald-600 focus:bg-emerald-50 gap-2"
+      <td className="py-3 px-4">
+        <div className="flex items-center justify-end gap-1">
+          {tenant.status === 'pending' && (
+            <>
+              <button
                 onClick={() => onApprove(tenant)}
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition-colors"
               >
-                <CheckCircle2 className="w-4 h-4" /> Reactivate
-              </DropdownMenuItem>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
+                <CheckCircle2 className="w-3.5 h-3.5" /> Approve
+              </button>
+              <button
+                onClick={() => onReject(tenant)}
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 transition-colors"
+              >
+                <XCircle className="w-3.5 h-3.5" /> Reject
+              </button>
+            </>
+          )}
+          {tenant.status === 'active' && (
+            <button
+              onClick={() => onSuspend(tenant)}
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 transition-colors"
+            >
+              <Ban className="w-3.5 h-3.5" /> Suspend
+            </button>
+          )}
+          {tenant.status === 'suspended' && (
+            <button
+              onClick={() => onApprove(tenant)}
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition-colors"
+            >
+              <CheckCircle2 className="w-3.5 h-3.5" /> Reactivate
+            </button>
+          )}
+        </div>
       </td>
     </tr>
   );
@@ -112,7 +101,6 @@ function TenantRow({ tenant, onApprove, onReject, onSuspend }: {
 
 export function TenantsPage() {
   const qc = useQueryClient();
-  const { toast } = useToast();
 
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<string>('all');
@@ -142,20 +130,20 @@ export function TenantsPage() {
 
   const approveMutation = useMutation({
     mutationFn: (id: string) => tenantApi.superAdmin.approve(id),
-    onSuccess: () => { invalidate(); setApproveTarget(null); toast({ title: 'Organization approved' }); },
-    onError: () => toast({ title: 'Failed to approve', variant: 'destructive' }),
+    onSuccess: () => { invalidate(); setApproveTarget(null); toast.success('Organization approved'); },
+    onError: () => toast.error('Failed to approve'),
   });
 
   const rejectMutation = useMutation({
     mutationFn: ({ id, note }: { id: string; note: string }) => tenantApi.superAdmin.reject(id, note),
-    onSuccess: () => { invalidate(); setRejectTarget(null); setRejectNote(''); toast({ title: 'Organization rejected' }); },
-    onError: () => toast({ title: 'Failed to reject', variant: 'destructive' }),
+    onSuccess: () => { invalidate(); setRejectTarget(null); setRejectNote(''); toast.success('Organization rejected'); },
+    onError: () => toast.error('Failed to reject'),
   });
 
   const suspendMutation = useMutation({
     mutationFn: (id: string) => tenantApi.superAdmin.suspend(id),
-    onSuccess: () => { invalidate(); setSuspendTarget(null); toast({ title: 'Organization suspended' }); },
-    onError: () => toast({ title: 'Failed to suspend', variant: 'destructive' }),
+    onSuccess: () => { invalidate(); setSuspendTarget(null); toast.success('Organization suspended'); },
+    onError: () => toast.error('Failed to suspend'),
   });
 
   const tenants: Tenant[] = data?.data.data?.data ?? [];

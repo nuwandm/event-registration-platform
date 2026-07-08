@@ -10,13 +10,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 export function BrandingPage() {
   const { tenant } = useTenant();
   const admin = useAuthStore((s) => s.admin);
   const qc = useQueryClient();
-  const { toast } = useToast();
 
   const [name, setName] = useState(tenant?.name ?? '');
   const [primaryColor, setPrimaryColor] = useState(tenant?.primaryColor ?? '#3b82f6');
@@ -38,7 +37,7 @@ export function BrandingPage() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['tenant-public'] });
       document.documentElement.style.setProperty('--brand-color', primaryColor);
-      toast({ title: 'Branding updated' });
+      toast.success('Branding updated');
     },
   });
 
