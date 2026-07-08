@@ -92,8 +92,8 @@ export function DateTimePicker({
 
   const incrementHour = () => applyTime((hour24 + 1) % 24, minutes);
   const decrementHour = () => applyTime((hour24 - 1 + 24) % 24, minutes);
-  const incrementMinute = () => applyTime(hour24, (minutes + 5) % 60);
-  const decrementMinute = () => applyTime(hour24, (minutes - 5 + 60) % 60);
+  const incrementMinute = () => applyTime(hour24, (minutes + 1) % 60);
+  const decrementMinute = () => applyTime(hour24, (minutes - 1 + 60) % 60);
   const toggleAMPM = (toAM: boolean) => {
     if (toAM && isPM) applyTime(hour24 - 12, minutes);
     if (!toAM && !isPM) applyTime(hour24 + 12, minutes);
