@@ -93,7 +93,8 @@ export interface Event {
   status: EventStatus;
   registrationCount: number;
   questions: Question[];
-  contactInfo?: string;
+  contactPhone?: string;
+  whatsappNumber?: string;
   createdAt: string;
   updatedAt: string;
 }

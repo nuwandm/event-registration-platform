@@ -31,7 +31,8 @@ export const eventFormSchema = z.object({
   bankDetails: bankDetailsSchema,
   bannerPosition: z.object({ x: z.number(), y: z.number() }).optional(),
   questions: z.array(questionSchema).default([]),
-  contactInfo: z.string().max(500).optional(),
+  contactPhone: z.string().max(30).optional(),
+  whatsappNumber: z.string().max(30).optional(),
 });
 
 export interface QuestionFormValue {
@@ -60,5 +61,6 @@ export interface EventFormValues {
   };
   bannerPosition?: { x: number; y: number };
   questions: QuestionFormValue[];
-  contactInfo?: string;
+  contactPhone?: string;
+  whatsappNumber?: string;
 }

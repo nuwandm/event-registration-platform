@@ -24,7 +24,8 @@ export interface CreateEventDTO {
   status?: 'draft' | 'published' | 'closed';
   bannerPosition?: { x: number; y: number };
   questions?: Array<{ label: string; type: QuestionType; options: string[]; required: boolean }>;
-  contactInfo?: string;
+  contactPhone?: string;
+  whatsappNumber?: string;
 }
 
 export const eventService = {
