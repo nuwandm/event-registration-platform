@@ -81,4 +81,8 @@ export const eventRepository = {
   async incrementRegistrationCount(id: string): Promise<void> {
     await Event.findByIdAndUpdate(id, { $inc: { registrationCount: 1 } });
   },
+
+  async decrementRegistrationCount(id: string): Promise<void> {
+    await Event.findByIdAndUpdate(id, { $inc: { registrationCount: -1 } });
+  },
 };
