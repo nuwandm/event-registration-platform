@@ -1,9 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { QrCode, Hash, Search, CheckCircle2, XCircle, Clock, Ticket, ChevronDown } from 'lucide-react';
+import { Hash, Search, Ticket, ChevronDown } from 'lucide-react';
 
-import { registrationsApi } from '@/api/registrationsApi';
 import { Button } from '@/components/ui/button';
 
 /* ── Floating CTA pill ───────────────────────────────────────────────────── */
@@ -61,45 +59,21 @@ function FloatingTracker({ onClick }: { onClick: () => void }) {
 /* ── Main widget ─────────────────────────────────────────────────────────── */
 export function StatusCheckWidget() {
   const [refNumber, setRefNumber] = useState('');
-  const [submitted, setSubmitted] = useState('');
   const navigate = useNavigate();
   const sectionRef = useRef<HTMLDivElement>(null);
 
   const scrollToWidget = () => {
     sectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    // Focus the input after scroll
     setTimeout(() => {
       sectionRef.current?.querySelector('input')?.focus();
     }, 400);
   };
 
-  const { data: result, isLoading, isError, error } = useQuery({
-    queryKey: ['check-registration', submitted],
-    queryFn: () => registrationsApi.checkByNumber(submitted),
-    select: (res) => res.data.data?.registration,
-    enabled: !!submitted,
-    retry: false,
-  });
-
   const handleCheck = (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = refNumber.trim().toUpperCase();
     if (!trimmed) return;
-    setSubmitted(trimmed);
-  };
-
-  const statusBadge = (status: string) => {
-    if (status === 'approved')
-      return 'text-emerald-700 bg-emerald-50 border-emerald-200';
-    if (status === 'rejected')
-      return 'text-red-700 bg-red-50 border-red-200';
-    return 'text-amber-700 bg-amber-50 border-amber-200';
-  };
-
-  const StatusIcon = ({ status }: { status: string }) => {
-    if (status === 'approved') return <CheckCircle2 className="w-5 h-5 text-emerald-500" />;
-    if (status === 'rejected') return <XCircle className="w-5 h-5 text-red-500" />;
-    return <Clock className="w-5 h-5 text-amber-500" />;
+    navigate(`/registration/status/${trimmed}`);
   };
 
   return (
@@ -108,13 +82,11 @@ export function StatusCheckWidget() {
 
       {/* Section wrapper */}
       <div ref={sectionRef} className="relative">
-        {/* Decorative gradient backdrop */}
         <div className="absolute inset-0 bg-linear-to-br from-blue-50 via-indigo-50 to-slate-50 rounded-3xl -z-10" />
         <div className="absolute inset-0 rounded-3xl border border-blue-100/80 -z-10" />
 
-        {/* Corner QR decoration */}
         <div className="absolute top-5 right-5 opacity-5 pointer-events-none">
-          <QrCode className="w-24 h-24 text-blue-900" />
+          <Ticket className="w-24 h-24 text-blue-900" />
         </div>
 
         <div className="p-7 sm:p-8">
@@ -139,105 +111,27 @@ export function StatusCheckWidget() {
                 type="text"
                 value={refNumber}
                 onChange={(e) => setRefNumber(e.target.value)}
-                placeholder="Enter reference number  e.g. EVT-001"
+                placeholder="e.g. EVT-2026-000001"
                 className="w-full pl-9 pr-4 py-3 text-sm border border-slate-300 bg-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent uppercase placeholder:normal-case placeholder:text-slate-400 shadow-sm"
               />
             </div>
             <Button
               type="submit"
-              disabled={isLoading || !refNumber.trim()}
+              disabled={!refNumber.trim()}
               className="rounded-xl px-5 shadow-md shadow-blue-500/20"
             >
-              {isLoading ? (
-                <span className="flex items-center gap-2">
-                  <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                  Checking…
-                </span>
-              ) : (
-                <span className="flex items-center gap-2">
-                  <Search className="w-4 h-4" />
-                  Check Status
-                </span>
-              )}
+              <span className="flex items-center gap-2">
+                <Search className="w-4 h-4" />
+                Check Status
+              </span>
             </Button>
           </form>
 
-          <p className="text-xs text-slate-400 mb-5">
+          <p className="text-xs text-slate-400">
             Your reference number was shown on screen after you submitted your registration.
           </p>
-
-          {/* Error */}
-          {isError && submitted && (
-            <div className="flex items-center gap-2.5 text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
-              <XCircle className="w-4 h-4 shrink-0" />
-              {(error as { response?: { data?: { message?: string } } })?.response?.data?.message ??
-                'No registration found with this reference number.'}
-            </div>
-          )}
-
-          {/* Result card */}
-          {result && (
-            <div className="rounded-2xl border border-slate-200 overflow-hidden shadow-sm bg-white">
-              {/* Status bar */}
-              <div className={`flex items-center gap-3 px-5 py-3.5 border-b ${statusBadge(result.status)}`}>
-                <StatusIcon status={result.status} />
-                <span className="font-semibold capitalize">{result.status}</span>
-                <span className="ml-auto text-xs font-mono font-bold tracking-wider opacity-70">
-                  {result.registrationNumber}
-                </span>
-              </div>
-
-              {/* Details */}
-              <div className="px-5 py-4 space-y-2 text-sm">
-                <ResultRow label="Name" value={result.fullName} />
-                <ResultRow label="Email" value={result.email} />
-                {typeof result.eventId === 'object' &&
-                  result.eventId !== null &&
-                  'name' in result.eventId && (
-                    <ResultRow
-                      label="Event"
-                      value={(result.eventId as { name: string }).name}
-                    />
-                  )}
-              </div>
-
-              {/* Action footer */}
-              {result.status === 'approved' && result.qrCodeUrl && (
-                <div className="px-5 py-4 bg-emerald-50 border-t border-emerald-100">
-                  <Button
-                    className="w-full bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow shadow-emerald-500/20"
-                    onClick={() => navigate(`/registration/${String(result._id)}/qr`)}
-                  >
-                    <QrCode className="w-4 h-4 mr-2" />
-                    View My QR Code
-                  </Button>
-                </div>
-              )}
-              {result.status === 'pending' && (
-                <div className="px-5 py-3 bg-amber-50 border-t border-amber-100 flex items-center gap-2 text-xs text-amber-700">
-                  <Clock className="w-3.5 h-3.5 shrink-0" />
-                  Your payment receipt is being reviewed. Check back soon.
-                </div>
-              )}
-              {result.status === 'rejected' && (
-                <div className="px-5 py-3 bg-red-50 border-t border-red-100 flex items-center gap-2 text-xs text-red-700">
-                  <XCircle className="w-3.5 h-3.5 shrink-0" />
-                  {result.adminRemarks ?? 'Your registration was not approved.'}
-                </div>
-              )}
-            </div>
-          )}
         </div>
       </div>
     </>
-  );
-}
-
-function ResultRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex justify-between gap-4">
-      <span className="text-slate-400 shrink-0">{label}</span>
-      <span className="text-slate-700 font-medium text-right truncate">{value}</span>
-    </div>
   );
 }

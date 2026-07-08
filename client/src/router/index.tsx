@@ -11,6 +11,7 @@ import { EventDetailPage } from '@/pages/public/EventDetailPage';
 import { RegisterPage } from '@/pages/public/RegisterPage';
 import { RegistrationSuccessPage } from '@/pages/public/RegistrationSuccessPage';
 import { QRViewPage } from '@/pages/public/QRViewPage';
+import { RegistrationStatusPage } from '@/pages/public/RegistrationStatusPage';
 
 // Admin pages
 import { LoginPage } from '@/pages/admin/LoginPage';
@@ -31,6 +32,7 @@ const router = createBrowserRouter([
       { path: '/events/:slug/register', element: <RegisterPage /> },
       { path: '/registration/success', element: <RegistrationSuccessPage /> },
       { path: '/registration/:id/qr', element: <QRViewPage /> },
+      { path: '/registration/status/:refNumber', element: <RegistrationStatusPage /> },
     ],
   },
 
